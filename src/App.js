@@ -217,11 +217,21 @@ Would you be open to a short, no-commitment conversation to explore whether this
 
   return (
     <div className="App">
-      {/* TOP NAV */}
+      {/* TOP NAV WITH BRANDING */}
       <header>
-        <div className="logo">TC</div>
-        <h1>Leadership Command Center</h1>
-        <button>Book Strategy Call</button>
+        <div className="header-left">
+          <div className="logo">TC</div>
+          <div>
+            <div className="product-name">Talent Copilot</div>
+            <div className="product-tagline">GCC Leadership Command Center</div>
+          </div>
+        </div>
+        <div className="header-right">
+          <div className="founder-line">
+            Ayush Mishra · Founder — Talent Copilot
+          </div>
+          <button>Book Strategy Call</button>
+        </div>
       </header>
 
       <main>
@@ -371,7 +381,8 @@ Would you be open to a short, no-commitment conversation to explore whether this
                 Copy message
               </button>
               <button className="secondary-btn" onClick={closeOutreach}>
-                Close</button>
+                Close
+              </button>
             </div>
           </div>
         </div>
