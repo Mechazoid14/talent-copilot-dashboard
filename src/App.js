@@ -1,43 +1,156 @@
 import React, { useState } from "react";
 import "./App.css";
 
-// Leadership candidates (sample data)
+// Leadership candidates (realistic GCC-style profiles)
 const candidates = [
+  // ENGINEERING LEADERS
   {
     id: 1,
-    name: "Ahmed R.",
-    title: "Principal Engineering Manager - Backend",
+    name: "Ahmed Rahman",
+    title: "Director of Engineering - Mobility",
     company: "Careem",
     location: "Dubai",
     domain: "engineering",
-    hireabilityScore: 81,
+    hireabilityScore: 84,
     readinessTier: "now",
-    signals: ["Promotion gap 34 months", "Cloud scale", "Market pressure"],
-    warmth: 0.2,
+    signals: ["Promotion gap 38 months", "Led microservices migration", "Team of 40+ engineers"],
+    warmth: 0.32,
   },
   {
     id: 2,
-    name: "Sana T.",
-    title: "Principal Product Manager - AI/ML",
-    company: "Microsoft",
+    name: "Nikhil Prasad",
+    title: "Senior Engineering Manager - Logistics",
+    company: "Talabat",
     location: "Dubai",
-    domain: "product",
-    hireabilityScore: 75,
+    domain: "engineering",
+    hireabilityScore: 79,
     readinessTier: "soon",
-    signals: ["AI strategy", "Relocation friendly"],
-    warmth: 0.15,
+    signals: ["Checkout latency reduction", "High-traffic systems", "Works closely with product"],
+    warmth: 0.24,
   },
   {
     id: 3,
-    name: "Vikram S.",
-    title: "Senior Manager - Information Security",
+    name: "Lina Mansour",
+    title: "Head of Engineering - Platform",
+    company: "Noon",
+    location: "Dubai",
+    domain: "engineering",
+    hireabilityScore: 82,
+    readinessTier: "watchlist",
+    signals: ["Cloud cost optimisation", "Platform reliability", "Multi-country ownership"],
+    warmth: 0.18,
+  },
+  {
+    id: 4,
+    name: "Omar Suleiman",
+    title: "Principal Software Engineering Manager",
+    company: "Microsoft",
+    location: "Dubai",
+    domain: "engineering",
+    hireabilityScore: 87,
+    readinessTier: "soon",
+    signals: ["Azure-scale ownership", "Influences global roadmap"],
+    warmth: 0.21,
+  },
+
+  // PRODUCT LEADERS
+  {
+    id: 5,
+    name: "Sara Al Essa",
+    title: "Senior Product Manager - Growth",
+    company: "Tabby",
+    location: "Dubai",
+    domain: "product",
+    hireabilityScore: 81,
+    readinessTier: "now",
+    signals: ["Experimentation culture", "Checkout conversion wins", "Owns PLG initiatives"],
+    warmth: 0.35,
+  },
+  {
+    id: 6,
+    name: "Harish Verma",
+    title: "Principal Product Manager - AI Experiences",
+    company: "Microsoft",
+    location: "Dubai",
+    domain: "product",
+    hireabilityScore: 78,
+    readinessTier: "soon",
+    signals: ["AI/ML feature ownership", "Cross-org influence"],
+    warmth: 0.22,
+  },
+  {
+    id: 7,
+    name: "Dalia Khaled",
+    title: "Director of Product - Marketplace",
+    company: "Yalla",
+    location: "Dubai",
+    domain: "product",
+    hireabilityScore: 80,
+    readinessTier: "watchlist",
+    signals: ["Monetisation strategy", "Consumer engagement"],
+    warmth: 0.16,
+  },
+  {
+    id: 8,
+    name: "Amir Farouk",
+    title: "Lead Product Manager - Media & Streaming",
+    company: "Anghami",
+    location: "Abu Dhabi",
+    domain: "product",
+    hireabilityScore: 76,
+    readinessTier: "soon",
+    signals: ["Subscription funnels", "Cross-border markets"],
+    warmth: 0.2,
+  },
+
+  // SECURITY LEADERS
+  {
+    id: 9,
+    name: "Rehan Ali",
+    title: "Senior Manager - Cyber Defense",
     company: "e& Enterprise",
     location: "Abu Dhabi",
     domain: "security",
-    hireabilityScore: 68,
+    hireabilityScore: 73,
+    readinessTier: "now",
+    signals: ["Incident response lead", "24/7 SOC exposure"],
+    warmth: 0.3,
+  },
+  {
+    id: 10,
+    name: "Farah Labib",
+    title: "Head of Security & Compliance",
+    company: "G42",
+    location: "Abu Dhabi",
+    domain: "security",
+    hireabilityScore: 77,
+    readinessTier: "soon",
+    signals: ["Cloud compliance at scale", "AI data governance"],
+    warmth: 0.23,
+  },
+  {
+    id: 11,
+    name: "Nabeel Zahid",
+    title: "Principal Consultant - Offensive Security",
+    company: "DarkMatter",
+    location: "Abu Dhabi",
+    domain: "security",
+    hireabilityScore: 72,
     readinessTier: "watchlist",
-    signals: ["Cloud security", "Compliance ownership"],
-    warmth: 0.1,
+    signals: ["Red teaming", "Gov & critical infra exposure"],
+    warmth: 0.17,
+  },
+  {
+    id: 12,
+    name: "Priya Chand",
+    title: "Regional Security Architect - Zero Trust",
+    company: "Cisco",
+    location: "Dubai",
+    domain: "security",
+    hireabilityScore: 75,
+    readinessTier: "soon",
+    signals: ["Zero trust rollouts", "Multi-cloud security"],
+    warmth: 0.21,
   },
 ];
 
@@ -134,16 +247,16 @@ Would you be open to a short, no-commitment conversation to explore whether this
             </div>
             <ul className="notif-list">
               <li>
-                <strong>Ahmed R.</strong> moved from Soon to Now — promotion
+                <strong>Ahmed Rahman</strong> moved from Soon to Now — promotion
                 gap crossed 36 months at Careem.
               </li>
               <li>
-                <strong>Sana T.</strong> added new AI/ML certification — skill–
-                market fit score increased.
+                <strong>Sara Al Essa</strong> added experimentation wins at
+                Tabby — growth fit score increased.
               </li>
               <li>
-                <strong>Vikram S.</strong> joined Watchlist — new GCC
-                compliance exposure at e&amp; Enterprise.
+                <strong>Farah Labib</strong> joined Watchlist — new AI data
+                governance exposure at G42.
               </li>
             </ul>
           </div>
@@ -258,8 +371,7 @@ Would you be open to a short, no-commitment conversation to explore whether this
                 Copy message
               </button>
               <button className="secondary-btn" onClick={closeOutreach}>
-                Close
-              </button>
+                Close</button>
             </div>
           </div>
         </div>
