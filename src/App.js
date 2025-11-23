@@ -82,6 +82,26 @@ function App() {
     setSelectedCandidate(null);
   };
 
+  const copyMessage = async () => {
+    if (!selectedCandidate) return;
+
+    const firstName = selectedCandidate.name.split(" ")[0];
+    const msg = `Hi ${firstName},
+
+I’ve been tracking how leaders like you are driving ${selectedCandidate.domain} outcomes across GCC. Your ownership of ${selectedCandidate.signals[0] || "key initiatives"} at ${selectedCandidate.company} really stood out.
+
+I’m working with a leadership team that’s building the next phase of their ${selectedCandidate.domain} strategy in UAE, and your background looks like a strong fit for what they’re trying to solve in the next 12–18 months.
+
+Would you be open to a short, no-commitment conversation to explore whether this could be an interesting move for you?`;
+
+    try {
+      await navigator.clipboard.writeText(msg);
+      alert("Outreach draft copied to clipboard ✅");
+    } catch (e) {
+      alert("Couldn’t auto-copy, please copy manually.");
+    }
+  };
+
   return (
     <div className="App">
       {/* TOP NAV */}
@@ -212,12 +232,14 @@ function App() {
 
               <div className="modal-section-label">Smart draft</div>
               <div className="modal-message">
-                Hi {selectedCandidate.name.split(" ")[0]},  
+                Hi {selectedCandidate.name.split(" ")[0]},
                 <br />
-                I’ve been tracking how leaders like you are driving {selectedCandidate.domain} outcomes across GCC.
-                Your ownership of{" "}
+                <br />
+                I’ve been tracking how leaders like you are driving{" "}
+                {selectedCandidate.domain} outcomes across GCC. Your ownership
+                of{" "}
                 {selectedCandidate.signals[0] || "key initiatives"} at{" "}
-                {selectedCandidate.company} stands out.
+                {selectedCandidate.company} really stood out.
                 <br />
                 <br />
                 I’m working with a leadership team that’s building the next
@@ -232,7 +254,9 @@ function App() {
             </div>
 
             <div className="modal-footer">
-              <button className="primary-btn">Copy message</button>
+              <button className="primary-btn" onClick={copyMessage}>
+                Copy message
+              </button>
               <button className="secondary-btn" onClick={closeOutreach}>
                 Close
               </button>

@@ -86,28 +86,33 @@ main {
   color: #94a3b8;
 }
 
+.card-body {
+  margin-top: 10px;
+}
+
 /* Feasibility Score */
 .feasibility-score {
   font-size: 2.4rem;
   font-weight: 600;
   color: #60a5fa;
-  margin-top: 12px;
+  margin-top: 4px;
 }
 
 .feasibility-text {
   font-size: 0.75rem;
   color: #9ca3af;
+  margin-top: 4px;
 }
 
 /* Trigger Notifications */
-.notif-list {
+.notifications .notif-list {
   list-style: none;
   font-size: 0.75rem;
   padding: 0;
   margin: 10px 0 0;
 }
 
-.notif-list li {
+.notifications .notif-list li {
   margin-bottom: 6px;
   color: #d1d5db;
 }
@@ -236,4 +241,130 @@ main {
   border: 1px solid rgba(168, 85, 247, 0.6);
 }
 
-/* Modal styles omitted for brevity — add after this */
+/* --- Outreach Modal --- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal {
+  background: #020617;
+  border: 1px solid #1f2937;
+  border-radius: 18px;
+  padding: 16px 18px 14px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.6);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.modal-header h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.modal-close {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.modal-close:hover {
+  color: #e5e7eb;
+}
+
+.modal-body {
+  font-size: 0.78rem;
+  color: #e5e7eb;
+}
+
+.modal-candidate {
+  margin-bottom: 10px;
+}
+
+.modal-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.modal-title {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.modal-meta {
+  font-size: 0.7rem;
+  color: #6b7280;
+}
+
+.modal-section-label {
+  margin-top: 8px;
+  margin-bottom: 4px;
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.modal-message {
+  border-radius: 12px;
+  background: #020617;
+  border: 1px solid #1f2937;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #d1d5db;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.primary-btn {
+  background: #2563eb;
+  border: none;
+  border-radius: 9999px;
+  padding: 6px 12px;
+  font-size: 0.72rem;
+  color: white;
+  cursor: pointer;
+}
+
+.primary-btn:hover {
+  background: #1d4ed8;
+}
+
+.secondary-btn {
+  background: transparent;
+  border-radius: 9999px;
+  border: 1px solid #4b5563;
+  padding: 6px 12px;
+  font-size: 0.72rem;
+  color: #e5e7eb;
+  cursor: pointer;
+}
+
+.secondary-btn:hover {
+  background: #111827;
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+  .overview-row {
+    grid-template-columns: 1fr;
+  }
+}
