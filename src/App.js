@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./App.css";
 
-// Single source of truth for all candidates
+// Leadership candidates (sample data)
 const candidates = [
   {
     id: 1,
@@ -55,6 +55,7 @@ const readinessBadgeClass = (tier) => {
 
 function App() {
   const [activeDomain, setActiveDomain] = useState("engineering");
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
 
   const filteredCandidates = candidates.filter(
     (c) => c.domain === activeDomain
@@ -71,6 +72,14 @@ function App() {
       default:
         return "";
     }
+  };
+
+  const openOutreach = (candidate) => {
+    setSelectedCandidate(candidate);
+  };
+
+  const closeOutreach = () => {
+    setSelectedCandidate(null);
   };
 
   return (
@@ -125,9 +134,7 @@ function App() {
           {["engineering", "product", "security"].map((domain) => (
             <button
               key={domain}
-              className={
-                activeDomain === domain ? "tab active" : "tab"
-              }
+              className={activeDomain === domain ? "tab active" : "tab"}
               onClick={() => setActiveDomain(domain)}
             >
               {domain.charAt(0).toUpperCase() + domain.slice(1)}
@@ -165,13 +172,74 @@ function App() {
                 </div>
                 <div className="candidate-footer">
                   <span>Warmth: {(c.warmth * 100).toFixed(0)}%</span>
-                  <button className="outreach-btn">Outreach</button>
+                  <button
+                    className="outreach-btn"
+                    onClick={() => openOutreach(c)}
+                  >
+                    Outreach
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </section>
       </main>
+
+      {/* OUTREACH MODAL */}
+      {selectedCandidate && (
+        <div className="modal-backdrop" onClick={closeOutreach}>
+          <div
+            className="modal"
+            onClick={(e) => {
+              e.stopPropagation(); // prevent closing when clicking inside modal
+            }}
+          >
+            <div className="modal-header">
+              <h3>Outreach Preview</h3>
+              <button className="modal-close" onClick={closeOutreach}>
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="modal-candidate">
+                <div className="modal-name">{selectedCandidate.name}</div>
+                <div className="modal-title">
+                  {selectedCandidate.title} · {selectedCandidate.company}
+                </div>
+                <div className="modal-meta">{selectedCandidate.location}</div>
+              </div>
+
+              <div className="modal-section-label">Smart draft</div>
+              <div className="modal-message">
+                Hi {selectedCandidate.name.split(" ")[0]},  
+                <br />
+                I’ve been tracking how leaders like you are driving {selectedCandidate.domain} outcomes across GCC.
+                Your ownership of{" "}
+                {selectedCandidate.signals[0] || "key initiatives"} at{" "}
+                {selectedCandidate.company} stands out.
+                <br />
+                <br />
+                I’m working with a leadership team that’s building the next
+                phase of their {selectedCandidate.domain} strategy in UAE, and
+                your background looks like a strong fit for what they’re trying
+                to solve in the next 12–18 months.
+                <br />
+                <br />
+                Would you be open to a short, no-commitment conversation to
+                explore whether this could be an interesting move for you?
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="primary-btn">Copy message</button>
+              <button className="secondary-btn" onClick={closeOutreach}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
