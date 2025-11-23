@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import "./App.css";
 
-const sampleCandidates = [
+// Single source of truth for all candidates
+const candidates = [
   {
     id: 1,
     name: "Ahmed R.",
@@ -40,43 +41,49 @@ const sampleCandidates = [
   },
 ];
 
-const readinessBadgeStyle = (tier) => {
+// Map readiness tier to CSS class
+const readinessBadgeClass = (tier) => {
   switch (tier) {
     case "now":
-      return "bg-blue-500 text-blue-100 border border-blue-400";
+      return "badge now";
     case "soon":
-      return "bg-cyan-500 text-cyan-100 border border-cyan-400";
+      return "badge soon";
     default:
-      return "bg-purple-500 text-purple-100 border border-purple-400";
+      return "badge watchlist";
   }
 };
 
 function App() {
+  const [activeDomain, setActiveDomain] = useState("engineering");
+
+  const filteredCandidates = candidates.filter(
+    (c) => c.domain === activeDomain
+  );
+
+  const getSubtitle = () => {
+    switch (activeDomain) {
+      case "engineering":
+        return "Engineering Leadership Talent Board";
+      case "product":
+        return "Product Leadership Talent Board";
+      case "security":
+        return "Security Leadership Talent Board";
+      default:
+        return "";
+    }
+  };
+
   return (
-    <div className="App min-h-screen bg-[#05070b] text-slate-100">
-      {/* Top Nav */}
-      <header className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">
-            TC
-          </div>
-          <div>
-            <div className="text-sm uppercase tracking-[0.22em] text-slate-400">
-              Talent Copilot
-            </div>
-            <div className="text-base font-semibold text-slate-100">
-              Leadership Command Center
-            </div>
-          </div>
-        </div>
-        <button className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-500 text-sm font-medium">
-          Book Strategy Call
-        </button>
+    <div className="App">
+      {/* TOP NAV */}
+      <header>
+        <div className="logo">TC</div>
+        <h1>Leadership Command Center</h1>
+        <button>Book Strategy Call</button>
       </header>
 
-      {/* Content */}
-      <main className="px-6 py-5 space-y-5">
-        {/* Overview row */}
+      <main>
+        {/* OVERVIEW ROW */}
         <section className="overview-row">
           <div className="card large">
             <div className="card-header">
@@ -90,6 +97,7 @@ function App() {
               </div>
             </div>
           </div>
+
           <div className="card notifications">
             <div className="card-header">
               <h2>Trigger Notifications</h2>
@@ -105,63 +113,59 @@ function App() {
                 market fit score increased.
               </li>
               <li>
-                <strong>Vikram S.</strong> joined Watchlist — new GCC compliance
-                exposure at e&amp; Enterprise.
+                <strong>Vikram S.</strong> joined Watchlist — new GCC
+                compliance exposure at e&amp; Enterprise.
               </li>
             </ul>
           </div>
         </section>
 
-        {/* Talent board */}
+        {/* DOMAIN TABS */}
+        <div className="domain-tabs">
+          {["engineering", "product", "security"].map((domain) => (
+            <button
+              key={domain}
+              className={
+                activeDomain === domain ? "tab active" : "tab"
+              }
+              onClick={() => setActiveDomain(domain)}
+            >
+              {domain.charAt(0).toUpperCase() + domain.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* TALENT BOARD */}
         <section className="card talent-board">
           <div className="card-header">
             <div>
-              <h2>Leadership Talent Board</h2>
-              <span>Engineering / Product / Security</span>
-            </div>
-            <div className="card-sub">
-              Sorted by hireability &amp; readiness tier
+              <h2>{getSubtitle()}</h2>
+              <span>Now / Soon / Watchlist Intelligence</span>
             </div>
           </div>
 
           <div className="cards-grid">
-            {sampleCandidates.map((c) => (
+            {filteredCandidates.map((c) => (
               <div key={c.id} className="candidate-card">
-                <div>
-                  <div className="candidate-top">
-                    <div>
-                      <div className="candidate-name">{c.name}</div>
-                      <div className="candidate-title">{c.title}</div>
-                    </div>
-                    <div className={`badge ${readinessBadgeStyle(c.readinessTier)}`}>
-                      {c.readinessTier === "now"
-                        ? "Now"
-                        : c.readinessTier === "soon"
-                        ? "Soon"
-                        : "Watchlist"}
-                    </div>
+                <div className="candidate-top">
+                  <div>
+                    <div className="candidate-name">{c.name}</div>
+                    <div className="candidate-title">{c.title}</div>
                   </div>
-                  <div className="candidate-meta">
-                    {c.company} • {c.location}
+                  <div className={readinessBadgeClass(c.readinessTier)}>
+                    {c.readinessTier}
                   </div>
-                  <div className="candidate-score-row">
-                    <span>Hireability score</span>
-                    <span className="score">{c.hireabilityScore}/100</span>
-                  </div>
-                  <div className="candidate-signals">
-                    Signals:
-                    <ul>
-                      {c.signals.map((s, i) => (
-                        <li key={i}>{s}</li>
-                      ))}
-                    </ul>
-                  </div>
+                </div>
+                <div className="candidate-meta">
+                  {c.company} • {c.location}
+                </div>
+                <div className="candidate-score-row">
+                  <span>Hireability score</span>
+                  <span className="score">{c.hireabilityScore}/100</span>
                 </div>
                 <div className="candidate-footer">
                   <span>Warmth: {(c.warmth * 100).toFixed(0)}%</span>
-                  <button className="outreach-btn">
-                    Open in Outreach Console
-                  </button>
+                  <button className="outreach-btn">Outreach</button>
                 </div>
               </div>
             ))}

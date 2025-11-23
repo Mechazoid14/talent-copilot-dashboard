@@ -1,12 +1,13 @@
-/* Overall page */
+/* --- Global Layout --- */
 .App {
   min-height: 100vh;
   background: #05070b;
   color: #e5e7eb;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 }
 
-/* Top nav */
+/* --- Header --- */
 header {
   border-bottom: 1px solid rgba(30, 41, 59, 0.9);
   padding: 16px 24px;
@@ -27,6 +28,12 @@ header {
   font-weight: bold;
 }
 
+header h1 {
+  font-size: 1rem;
+  color: #e5e7eb;
+  font-weight: 600;
+}
+
 header button {
   padding: 8px 16px;
   border-radius: 9999px;
@@ -34,7 +41,6 @@ header button {
   background: #2563eb;
   color: white;
   font-size: 0.8rem;
-  font-weight: 500;
   cursor: pointer;
 }
 
@@ -42,15 +48,15 @@ header button:hover {
   background: #1d4ed8;
 }
 
-/* Main container */
+/* --- Main Content Area --- */
 main {
   padding: 20px 24px 32px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
-/* Overview section */
+/* --- Overview Row --- */
 .overview-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -68,7 +74,6 @@ main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
 }
 
 .card-header h2 {
@@ -78,14 +83,15 @@ main {
 
 .card-header span {
   font-size: 0.7rem;
-  color: #9ca3af;
+  color: #94a3b8;
 }
 
+/* Feasibility Score */
 .feasibility-score {
-  font-size: 2.5rem;
-  padding-top: 10px;
+  font-size: 2.4rem;
   font-weight: 600;
   color: #60a5fa;
+  margin-top: 12px;
 }
 
 .feasibility-text {
@@ -93,37 +99,66 @@ main {
   color: #9ca3af;
 }
 
-/* Notifications */
+/* Trigger Notifications */
 .notif-list {
   list-style: none;
+  font-size: 0.75rem;
   padding: 0;
-  margin: 0;
+  margin: 10px 0 0;
 }
 
 .notif-list li {
-  font-size: 0.75rem;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  color: #d1d5db;
 }
 
-/* Talent board */
-.talent-board {
+/* --- Domain Tabs --- */
+.domain-tabs {
+  display: flex;
+  gap: 12px;
   margin-top: 10px;
 }
 
+.tab {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  color: #94a3b8;
+  padding: 7px 14px;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: #1e293b;
+}
+
+.tab.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+/* --- Talent Cards Grid --- */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
   margin-top: 12px;
 }
 
 .candidate-card {
+  background: #0b0f17;
+  border: 1px solid #1f2937;
+  padding: 14px;
   border-radius: 16px;
-  border: 1px solid #111827;
-  background: #020617;
-  padding: 12px;
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+
+.candidate-top {
+  display: flex;
   justify-content: space-between;
 }
 
@@ -140,66 +175,68 @@ main {
 .candidate-meta {
   font-size: 0.7rem;
   color: #6b7280;
-  margin-bottom: 6px;
 }
 
 .candidate-score-row {
   display: flex;
   justify-content: space-between;
   font-size: 0.75rem;
-  margin-bottom: 6px;
 }
 
 .score {
-  font-size: 0.85rem;
   font-weight: 600;
   color: #60a5fa;
-}
-
-.candidate-signals {
-  font-size: 0.7rem;
-  color: #9ca3af;
-}
-
-.candidate-signals ul {
-  margin: 4px 0 0;
-  padding-left: 16px;
 }
 
 .candidate-footer {
   display: flex;
   justify-content: space-between;
-  font-size: 0.7rem;
-  margin-top: 8px;
+  font-size: 0.72rem;
 }
 
-/* Badge (Now/Soon/Watchlist) */
+/* Outreach Button */
+.outreach-btn {
+  background: #2563eb;
+  border: none;
+  border-radius: 12px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: white;
+}
+
+.outreach-btn:hover {
+  background: #1d4ed8;
+}
+
+/* --- Readiness Badges (Now/Soon/Watchlist) --- */
 .badge {
   font-size: 0.6rem;
   padding: 3px 8px;
   border-radius: 9999px;
-  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-.now {
+.badge.now {
   background: rgba(37, 99, 235, 0.2);
   color: #bfdbfe;
-  border: 1px solid rgba(59, 130, 246, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.7);
 }
 
-.soon {
+.badge.soon {
   background: rgba(6, 182, 212, 0.2);
   color: #a5f3fc;
-  border: 1px solid rgba(34, 211, 238, 0.8);
+  border: 1px solid rgba(34, 211, 238, 0.7);
 }
 
-.watchlist {
-  background: rgba(168, 85, 247, 0.18);
+.badge.watchlist {
+  background: rgba(168, 85, 247, 0.2);
   color: #e9d5ff;
-  border: 1px solid rgba(168, 85, 247, 0.8);
+  border: 1px solid rgba(168, 85, 247, 0.6);
 }
 
-/* Responsive */
+/* --- Mobile Responsiveness --- */
 @media (max-width: 768px) {
   .overview-row {
     grid-template-columns: 1fr;
