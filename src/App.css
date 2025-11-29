@@ -78,20 +78,20 @@ main {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 /* --- DASHBOARD CARDS --- */
 .card {
   border-radius: 18px;
   border: 1px solid #0f172a;
-  background: #0a0f19;
+  background: #020617;
   padding: 16px;
 }
 
 .overview-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.3fr 1fr;
   gap: 16px;
 }
 
@@ -102,7 +102,7 @@ main {
 }
 
 .card-header h2 {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
 }
 
@@ -111,11 +111,79 @@ main {
   color: #64748b;
 }
 
-.feasibility-score {
-  font-size: 2.4rem;
+/* --- FEASIBILITY STATS --- */
+.feasibility-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.stat label {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.stat .highlight {
+  font-size: 1.1rem;
   font-weight: 600;
   color: #60a5fa;
-  margin-top: 12px;
+  display: block;
+  margin-top: 2px;
+}
+
+.stat .highlight.high {
+  color: #f97373;
+}
+
+/* --- TALENT SUPPLY HEATBARS --- */
+.supply-heatbars {
+  margin-top: 14px;
+}
+
+.heat-title {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+
+.heat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.heat-label {
+  font-size: 0.7rem;
+  color: #e5e7eb;
+  width: 72px;
+}
+
+.heat-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: #020617;
+  border: 1px solid #1f2937;
+  overflow: hidden;
+}
+
+.heat-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.heat-fill.eng {
+  background: linear-gradient(90deg, #3b82f6, #22c55e);
+}
+
+.heat-fill.prod {
+  background: linear-gradient(90deg, #22c55e, #a855f7);
+}
+
+.heat-fill.sec {
+  background: linear-gradient(90deg, #a855f7, #f97316);
 }
 
 /* --- NOTIFICATION LIST --- */
@@ -123,7 +191,7 @@ main {
   list-style: none;
   font-size: 0.72rem;
   padding: 0;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .notif-list li {
@@ -131,14 +199,19 @@ main {
   color: #d1d5db;
 }
 
-/* --- DOMAIN TABS --- */
+/* --- REGION & DOMAIN TABS --- */
+.region-tabs {
+  display: flex;
+  gap: 10px;
+}
+
 .domain-tabs {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 .tab {
-  background: #0f172a;
+  background: #020617;
   border: 1px solid #1e293b;
   color: #94a3b8;
   padding: 7px 14px;
@@ -148,7 +221,7 @@ main {
 }
 
 .tab:hover {
-  background: #1e293b;
+  background: #111827;
 }
 
 .tab.active {
@@ -157,18 +230,100 @@ main {
   border-color: #2563eb;
 }
 
+/* --- SEARCH ROW --- */
+.search-row {
+  margin: 10px 0 4px;
+}
+
+.search-row input {
+  width: 100%;
+  max-width: 360px;
+  background: #020617;
+  border-radius: 9999px;
+  border: 1px solid #1e293b;
+  padding: 7px 14px;
+  font-size: 0.75rem;
+  color: #e5e7eb;
+}
+
+.search-row input::placeholder {
+  color: #64748b;
+}
+
+.search-row input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+/* --- MARKET INSIGHTS CARD --- */
+.market-card {
+  background: #020617;
+}
+
+.insights-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.insight-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.insight-row p {
+  font-size: 0.74rem;
+  color: #e5e7eb;
+  margin: 0;
+}
+
+.pill {
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.eng-pill {
+  background: rgba(59, 130, 246, 0.18);
+  color: #bfdbfe;
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.prod-pill {
+  background: rgba(34, 197, 94, 0.12);
+  color: #bbf7d0;
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.sec-pill {
+  background: rgba(168, 85, 247, 0.18);
+  color: #e9d5ff;
+  border-color: rgba(168, 85, 247, 0.5);
+}
+
 /* --- TALENT BOARD --- */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 14px;
+  margin-top: 12px;
 }
 
 .candidate-card {
-  background: #0b0f17;
+  background: #020617;
   border: 1px solid #1f2937;
   padding: 14px;
   border-radius: 16px;
+}
+
+.candidate-card.candidate-cross {
+  border-style: dashed;
+  border-color: #4b5563;
+  opacity: 0.92;
 }
 
 .candidate-top {
@@ -189,13 +344,20 @@ main {
 .candidate-meta {
   font-size: 0.7rem;
   color: #64748b;
+  margin-top: 2px;
+}
+
+.candidate-region {
+  font-size: 0.7rem;
+  margin-top: 4px;
+  color: #a5b4fc;
 }
 
 .candidate-score-row {
   display: flex;
   justify-content: space-between;
   font-size: 0.75rem;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .score {
@@ -259,17 +421,18 @@ main {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(2, 6, 23, 0.75);
+  background: rgba(2, 6, 23, 0.78);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 40;
 }
 
 .modal {
-  background: #0d111a;
+  background: #020617;
   border: 1px solid #1f2937;
-  padding: 20px;
-  width: min(420px, 90%);
+  padding: 18px 18px 14px;
+  width: min(440px, 90%);
   border-radius: 16px;
 }
 
@@ -291,6 +454,7 @@ main {
 .modal-name {
   font-size: 1rem;
   font-weight: 600;
+  margin-top: 8px;
 }
 
 .modal-title {
@@ -305,7 +469,7 @@ main {
 }
 
 .modal-section-label {
-  margin-top: 12px;
+  margin-top: 10px;
   font-size: 0.72rem;
   text-transform: uppercase;
   color: #64748b;
@@ -317,14 +481,14 @@ main {
   border: 1px solid #1f2937;
   border-radius: 10px;
   padding: 10px;
-  background: #0b1120;
+  background: #020617;
   margin-top: 6px;
 }
 
 .modal-footer {
   display: flex;
   justify-content: space-between;
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 .primary-btn,
@@ -352,4 +516,25 @@ main {
 
 .secondary-btn:hover {
   background: #334155;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 900px) {
+  .overview-row {
+    grid-template-columns: 1fr;
+  }
+
+  main {
+    padding: 16px;
+  }
+
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .header-right {
+    align-items: flex-start;
+  }
 }
