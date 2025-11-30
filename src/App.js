@@ -1,23 +1,227 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "./App.css";
 
-// ---------- DATA ----------
+/* -------------------------------------------------------------------------- */
+/*  V3 STATUS BEACON COMPONENT                                                */
+/* -------------------------------------------------------------------------- */
+
+const StatusBeacon = ({ status }) => {
+  const normalized = (status || "").toLowerCase();
+  const iconMap = {
+    now: "⚡",
+    soon: "⏳",
+    watchlist: "👁‍🗨",
+  };
+
+  const icon = iconMap[normalized] || "●";
+  const label = (status || "").toUpperCase();
+
+  return (
+    <div className={`status-beacon v3 ${normalized}`}>
+      <span className="sb-ring" aria-hidden="true">
+        <span className="sb-dot" />
+      </span>
+      <span className="sb-label">
+        <span className="sb-icon">{icon}</span>
+        {label}
+      </span>
+    </div>
+  );
+};
+
+/* -------------------------------------------------------------------------- */
+/*  SIMPLE SPARKLINE COMPONENT (DEMAND VS SUPPLY)                             */
+/* -------------------------------------------------------------------------- */
+
+const Sparkline = ({ demand, supply }) => {
+  const width = 120;
+  const height = 40;
+
+  const toPath = (points) => {
+    if (!points || points.length === 0) return "";
+    const step = width / (points.length - 1 || 1);
+    return points
+      .map((v, i) => {
+        const x = i * step;
+        const y = height - (v / 100) * height;
+        return `${i === 0 ? "M" : "L"}${x},${y}`;
+      })
+      .join(" ");
+  };
+
+  const demandPath = toPath(demand);
+  const supplyPath = toPath(supply);
+
+  return (
+    <svg className="sparkline" viewBox={`0 0 ${width} ${height}`}>
+      <path
+        d={demandPath}
+        className="sparkline-line demand"
+        fill="none"
+        strokeWidth="2"
+      />
+      <path
+        d={supplyPath}
+        className="sparkline-line supply"
+        fill="none"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+};
+
+/* -------------------------------------------------------------------------- */
+/*  CIRCULAR GAUGE FOR SUCCESS PROBABILITY                                    */
+/* -------------------------------------------------------------------------- */
+
+const Gauge = ({ value }) => {
+  const size = 140;
+  const strokeWidth = 10;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const clamped = Math.max(0, Math.min(100, value));
+  const offset = circumference * (1 - clamped / 100);
+
+  return (
+    <svg className="gauge" viewBox={`0 0 ${size} ${size}`}>
+      <defs>
+        <linearGradient id="gaugeStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#22c55e" />
+          <stop offset="50%" stopColor="#38bdf8" />
+          <stop offset="100%" stopColor="#a855f7" />
+        </linearGradient>
+      </defs>
+
+      <circle
+        className="gauge-track"
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+      />
+      <circle
+        className="gauge-fill"
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+      />
+
+      <text
+        x="50%"
+        y="48%"
+        textAnchor="middle"
+        className="gauge-value"
+      >{`${clamped}%`}</text>
+      <text x="50%" y="63%" textAnchor="middle" className="gauge-label">
+        Success
+      </text>
+    </svg>
+  );
+};
+
+/* -------------------------------------------------------------------------- */
+/*  OUTREACH MODAL                                                            */
+/* -------------------------------------------------------------------------- */
+
+const OutreachModal = ({ leader, onClose }) => {
+  if (!leader) return null;
+
+  const defaultMessage = `Hi ${leader.name.split(" ")[0]},
+
+I’ve been tracking your work around ${leader.focus} at ${leader.company} and believe you’re in the top readiness tier for a GCC leadership brief we’re shaping.
+
+Would you be open to a short, confidential conversation about what “next 3 years” looks like for you in ${leader.location}?`;
+
+  return (
+    <div className="modal-backdrop">
+      <div className="modal slide-up">
+        <div className="modal-header">
+          <div>
+            <div className="modal-eyebrow">Outreach Console</div>
+            <div className="modal-name">{leader.name}</div>
+            <div className="modal-title">
+              {leader.title} · {leader.company} · {leader.location}
+            </div>
+          </div>
+          <button className="modal-close" onClick={onClose}>
+            ✕
+          </button>
+        </div>
+
+        <div className="modal-section-label">Suggested opener</div>
+        <textarea
+          className="modal-message"
+          defaultValue={defaultMessage}
+        />
+
+        <div className="modal-footer">
+          <div className="modal-hint">
+            This is just a draft. You’ll send it via LinkedIn / email.
+          </div>
+          <div>
+            <button className="btn-outline secondary-btn" onClick={onClose}>
+              Close
+            </button>
+            <button className="nav-cta modal-primary" onClick={onClose}>
+              Mark as Contacted
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* -------------------------------------------------------------------------- */
+/*  SAMPLE DATA                                                               */
+/* -------------------------------------------------------------------------- */
+
+const trendDemand = [40, 55, 68, 72, 65];
+const trendSupply = [70, 64, 59, 52, 45];
+
+const depthByFunction = [
+  { label: "Engineering", value: 92 },
+  { label: "Product", value: 76 },
+  { label: "Security", value: 64 },
+];
 
 const triggers = [
   {
     id: 1,
-    label: "NOW",
+    type: "now",
+    when: "2h ago",
     text: "Ahmed Rahman moved from Soon → Now — promotion gap crossed 36 months at Careem.",
   },
   {
     id: 2,
-    label: "SOON",
+    type: "soon",
+    when: "1d ago",
     text: "Rania Al Nasser led new fintech launch at STC — compensation competitiveness should be reviewed.",
   },
   {
     id: 3,
-    label: "WATCHLIST",
+    type: "watchlist",
+    when: "3d ago",
     text: "Farah Labib joined Watchlist — new AI data governance exposure at G42.",
+  },
+];
+
+const marketInsights = [
+  {
+    id: 1,
+    tag: "Engineering",
+    text: "Strong senior engineering leadership across Dubai & Abu Dhabi; highly competitive for platform & data leadership.",
+  },
+  {
+    id: 2,
+    tag: "Product",
+    text: "Mature product talent in BNPL, marketplaces & SaaS; strong growth & monetisation track record.",
+  },
+  {
+    id: 3,
+    tag: "Security",
+    text: "Deep cyber & cloud security leaders from telco, gov and AI orgs; UAE is now the GCC hub for security leadership.",
   },
 ];
 
@@ -28,9 +232,10 @@ const leaders = [
     title: "Director of Engineering — Mobility",
     company: "Careem",
     location: "Dubai",
-    readiness: "NOW",
-    score: 84,
+    readinessTier: "now",
+    hireabilityScore: 84,
     warmth: 32,
+    focus: "mobility & platform scale",
   },
   {
     id: 2,
@@ -38,9 +243,10 @@ const leaders = [
     title: "Senior Engineering Manager — Logistics",
     company: "Talabat",
     location: "Dubai",
-    readiness: "SOON",
-    score: 79,
+    readinessTier: "soon",
+    hireabilityScore: 79,
     warmth: 24,
+    focus: "logistics & last-mile",
   },
   {
     id: 3,
@@ -48,9 +254,10 @@ const leaders = [
     title: "Head of Engineering — Platform",
     company: "Noon",
     location: "Dubai",
-    readiness: "WATCHLIST",
-    score: 82,
+    readinessTier: "watchlist",
+    hireabilityScore: 82,
     warmth: 18,
+    focus: "platform & reliability",
   },
   {
     id: 4,
@@ -58,166 +265,29 @@ const leaders = [
     title: "Principal SWE Manager",
     company: "Microsoft",
     location: "Dubai",
-    readiness: "SOON",
-    score: 87,
+    readinessTier: "soon",
+    hireabilityScore: 87,
     warmth: 21,
+    focus: "security & cloud scale",
   },
 ];
 
-const demandSeries = [48, 62, 70, 80, 76, 83, 92];
-const supplySeries = [72, 74, 71, 69, 64, 60, 58];
-
-// ---------- SMALL HOOKS / VIZ ----------
-
-function useAnimatedNumber(target, duration = 800) {
-  const [value, setValue] = useState(0);
-
-  useEffect(() => {
-    let frame;
-    const start = performance.now();
-
-    const animate = (now) => {
-      const progress = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setValue(Math.round(target * eased));
-      if (progress < 1) frame = requestAnimationFrame(animate);
-    };
-
-    frame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frame);
-  }, [target, duration]);
-
-  return value;
-}
-
-function SuccessGauge({ value }) {
-  const radius = 48;
-  const stroke = 10;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - value / 100);
-
-  return (
-    <svg className="gauge" viewBox="0 0 140 140" aria-hidden="true">
-      <defs>
-        <linearGradient id="gaugeStroke" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#22c55e" />
-          <stop offset="50%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#a855f7" />
-        </linearGradient>
-      </defs>
-      <circle
-        className="gauge-track"
-        cx="70"
-        cy="70"
-        r={radius}
-        strokeWidth={stroke}
-      />
-      <circle
-        className="gauge-fill"
-        cx="70"
-        cy="70"
-        r={radius}
-        strokeWidth={stroke}
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-      />
-      <text x="70" y="70" textAnchor="middle" className="gauge-value">
-        {value}%
-      </text>
-      <text x="70" y="88" textAnchor="middle" className="gauge-label">
-        Success
-      </text>
-    </svg>
-  );
-}
-
-function Sparkline({ data, color = "#38bdf8" }) {
-  if (!data || !data.length) return null;
-
-  const width = 140;
-  const height = 42;
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const range = max - min || 1;
-
-  const points = data
-    .map((v, i) => {
-      const x = (i / (data.length - 1 || 1)) * width;
-      const y = height - ((v - min) / range) * height;
-      return `${x},${y}`;
-    })
-    .join(" ");
-
-  return (
-    <svg className="sparkline" viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
-      <polyline
-        fill="none"
-        stroke={color}
-        strokeWidth="2"
-        points={points}
-        className="sparkline-line"
-      />
-      <defs>
-        <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.24" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polygon
-        className="sparkline-fill"
-        fill="url(#sparkFill)"
-        points={`${points} ${width},${height} 0,${height}`}
-      />
-    </svg>
-  );
-}
-
-function DepthBar({ label, value }) {
-  return (
-    <div className="depth-bar-row">
-      <span className="depth-label">{label}</span>
-      <div className="depth-track">
-        <div className="depth-fill" style={{ width: `${value}%` }} />
-      </div>
-      <span className="depth-value">{value}</span>
-    </div>
-  );
-}
-
-function MarketInsight({ label, text }) {
-  return (
-    <div className="market-card">
-      <div className="market-pill">{label}</div>
-      <p>{text}</p>
-    </div>
-  );
-}
-
-// ---------- MAIN APP ----------
+/* -------------------------------------------------------------------------- */
+/*  MAIN APP                                                                  */
+/* -------------------------------------------------------------------------- */
 
 function App() {
   const [region, setRegion] = useState("UAE");
-  const [fnFilter, setFnFilter] = useState("Engineering");
+  const [domain, setDomain] = useState("Security");
+  const [selectedLeader, setSelectedLeader] = useState(null);
 
-  // This is the ONLY state we need for the modal
-  const [activeLeader, setActiveLeader] = useState(null);
+  const successProbability = 72;
+  const timeToFillDays = 48;
+  const relocationFriendly = "High";
+  const marketPressure = "High ↑";
 
-  const success = useAnimatedNumber(72);
-  const timeToFill = useAnimatedNumber(48);
-  const depth = { engineering: 92, product: 76, security: 64 };
-
-  const buildMessage = (leader) => {
-    if (!leader) return "";
-    return `Hi ${leader.name.split(" ")[0]},
-
-I’ve been tracking senior ${fnFilter.toLowerCase()} leadership across ${region}, and your work at ${leader.company} in ${leader.location} really stands out.
-
-We’re running a confidential search for a ${fnFilter.toLowerCase()} leadership role and Talent Copilot signals a very strong fit in terms of scope, impact and timing.
-
-Would you be open to a short conversation this week to explore if it aligns with your next move?
-
-Best,
-Ayush`;
+  const handleOutreach = (leader) => {
+    setSelectedLeader(leader);
   };
 
   return (
@@ -228,28 +298,28 @@ Ayush`;
           <div className="nav-left">
             <div className="nav-logo">TC</div>
             <div>
-              <div className="nav-product">TALENT COPILOT</div>
+              <div className="nav-product">Talent Copilot</div>
               <div className="nav-sub">
                 GCC Leadership Command Center ({region})
               </div>
             </div>
           </div>
           <div className="nav-right">
-            <span className="nav-founder">
-              Ayush Mishra • Founder — Talent Copilot
-            </span>
+            <div className="nav-founder">
+              Ayush Mishra · Founder — Talent Copilot
+            </div>
             <button className="nav-cta">Book Strategy Call</button>
           </div>
         </header>
 
         <main className="command-main">
-          {/* FILTERS */}
+          {/* REGION + DOMAIN FILTERS */}
           <div className="filters-row">
             <div className="pill-group">
               {["UAE", "Saudi Arabia"].map((r) => (
                 <button
                   key={r}
-                  className={region === r ? "filter-pill active" : "filter-pill"}
+                  className={`filter-pill ${region === r ? "active" : ""}`}
                   onClick={() => setRegion(r)}
                 >
                   {r}
@@ -257,89 +327,97 @@ Ayush`;
               ))}
             </div>
             <div className="pill-group">
-              {["Engineering", "Product", "Security"].map((fn) => (
+              {["Engineering", "Product", "Security"].map((d) => (
                 <button
-                  key={fn}
-                  className={fnFilter === fn ? "filter-pill active" : "filter-pill"}
-                  onClick={() => setFnFilter(fn)}
+                  key={d}
+                  className={`filter-pill ${domain === d ? "active" : ""}`}
+                  onClick={() => setDomain(d)}
                 >
-                  {fn}
+                  {d}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* ROW 1 – FEASIBILITY + TRIGGERS */}
-          <section className="grid-two slide-up">
-            <div className="panel panel-feasibility">
+          {/* TOP GRID: FEASIBILITY + TRIGGERS */}
+          <section className="grid-two">
+            {/* ROLE FEASIBILITY PANEL */}
+            <section className="panel">
               <div className="panel-header">
                 <div>
                   <h2>Role Feasibility Intelligence</h2>
                   <p className="panel-sub">
-                    Predictive read on whether this brief can be closed on time in {region}.
+                    Predictive read on whether this brief can be closed on time
+                    in {region}.
                   </p>
                 </div>
-                <span className="panel-tag">Live · 2h ago</span>
+                <div className="panel-tag">Live · 2h ago</div>
               </div>
 
               <div className="feasibility-grid">
                 <div className="gauge-block">
-                  <SuccessGauge value={success} />
+                  <Gauge value={successProbability} />
                 </div>
 
                 <div className="feasibility-metrics">
                   <div className="metric-row">
-                    <div>
-                      <span className="metric-label">Time-to-fill</span>
-                      <span className="metric-value">{timeToFill} days</span>
+                    <div className="metric-label">
+                      Time-to-fill
+                      <span className="metric-value">{timeToFillDays} days</span>
                     </div>
-                    <div>
-                      <span className="metric-label">Relocation friendly</span>
-                      <span className="metric-value">High</span>
+                    <div className="metric-label">
+                      Relocation friendly
+                      <span className="metric-value">{relocationFriendly}</span>
                     </div>
-                  </div>
-                  <div className="metric-row">
-                    <div>
-                      <span className="metric-label">Market pressure</span>
+                    <div className="metric-label">
+                      Market pressure
                       <span className="metric-value danger">
-                        High <span className="metric-arrow">↑</span>
-                      </span>
-                    </div>
-                    <div>
-                      <span className="metric-label">Function focus</span>
-                      <span className="metric-value">
-                        {fnFilter} leadership
+                        {marketPressure}
                       </span>
                     </div>
                   </div>
 
                   <div className="trend-block">
                     <div className="trend-header">
-                      <span className="metric-label">Demand vs supply trend</span>
-                      <span className="trend-legend">
-                        <span className="dot demand" /> Demand
-                        <span className="dot supply" /> Supply
-                      </span>
+                      <div className="panel-sub">Demand vs Supply trend</div>
+                      <div className="trend-legend">
+                        <span className="dot demand" />
+                        Demand
+                        <span className="dot supply" />
+                        Supply
+                      </div>
                     </div>
                     <div className="trend-lines">
-                      <Sparkline data={demandSeries} color="#f97316" />
-                      <Sparkline data={supplySeries} color="#38bdf8" />
+                      <Sparkline
+                        demand={trendDemand}
+                        supply={trendSupply}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="depth-row">
+                    <div className="panel-sub">Talent depth ({region})</div>
+                    <div className="depth-bars">
+                      {depthByFunction.map((fn) => (
+                        <div key={fn.label} className="depth-bar-row">
+                          <span className="depth-label">{fn.label}</span>
+                          <div className="depth-track">
+                            <div
+                              className="depth-fill"
+                              style={{ width: `${fn.value}%` }}
+                            />
+                          </div>
+                          <span className="depth-value">{fn.value}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
               </div>
+            </section>
 
-              <div className="depth-row">
-                <span className="metric-label">Talent depth (UAE)</span>
-                <div className="depth-bars">
-                  <DepthBar label="Engineering" value={depth.engineering} />
-                  <DepthBar label="Product" value={depth.product} />
-                  <DepthBar label="Security" value={depth.security} />
-                </div>
-              </div>
-            </div>
-
-            <div className="panel panel-triggers">
+            {/* TRIGGER NOTIFICATIONS PANEL */}
+            <section className="panel panel-triggers">
               <div className="panel-header">
                 <div>
                   <h2>Trigger Notifications</h2>
@@ -347,183 +425,132 @@ Ayush`;
                     Watch how leadership readiness shifts across the GCC.
                   </p>
                 </div>
-                <span className="panel-tag">Now / Soon / Watchlist</span>
+                <div className="panel-tag">Now / Soon / Watchlist</div>
               </div>
 
               <div className="trigger-list">
                 {triggers.map((t) => (
                   <div key={t.id} className="trigger-item">
-                    <span className={`trigger-badge trigger-${t.label.toLowerCase()}`}>
-                      {t.label}
-                    </span>
-                    <p>{t.text}</p>
+                    <div className="trigger-top">
+                      <StatusBeacon status={t.type} />
+                      <span className="trigger-time-label">{t.when}</span>
+                    </div>
+                    <div className="trigger-text">{t.text}</div>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           </section>
 
-          {/* ROW 2 – MARKET RADAR */}
-          <section className="panel panel-market slide-up">
+          {/* MARKET RADAR */}
+          <section className="panel panel-market">
             <div className="panel-header">
               <div>
                 <h2>Market Radar — {region}</h2>
                 <p className="panel-sub">
-                  Snapshot of leadership depth, compensation pressure, and relocation appetite for GCC tech.
+                  Snapshot of leadership depth, compensation pressure, and
+                  relocation appetite for GCC tech.
                 </p>
               </div>
-              <span className="panel-tag">Engineering · Product · Security</span>
+              <div className="panel-tag">
+                Engineering · Product · Security
+              </div>
             </div>
 
             <div className="market-grid">
-              <MarketInsight
-                label="ENGINEERING"
-                text="Strong senior engineering leadership across Dubai & Abu Dhabi; highly competitive for platform & data leadership."
-              />
-              <MarketInsight
-                label="PRODUCT"
-                text="Mature product talent in BNPL, marketplaces & SaaS; strong growth & monetisation track record."
-              />
-              <MarketInsight
-                label="SECURITY"
-                text="Deep cloud & cyber leaders from telco, government, and AI orgs; UAE is now the GCC hub for security leadership."
-              />
+              {marketInsights.map((m) => (
+                <div key={m.id} className="market-card">
+                  <span className="market-pill">{m.tag}</span>
+                  <p>{m.text}</p>
+                </div>
+              ))}
             </div>
           </section>
 
-          {/* ROW 3 – LEADERSHIP BOARD */}
-          <section className="panel panel-leaders slide-up">
+          {/* LEADERSHIP BOARD */}
+          <section className="panel panel-leaders">
             <div className="panel-header">
               <div>
                 <h2>Leadership Talent Board</h2>
                 <p className="panel-sub">
-                  Ranked by hireability & readiness tier for {fnFilter} leadership roles.
+                  Ranked by hireability &amp; readiness tier for {domain} roles.
                 </p>
               </div>
-              <span className="panel-tag">Now · Soon · Watchlist</span>
+              <div className="panel-tag">Now · Soon · Watchlist</div>
             </div>
 
             <div className="leaders-row">
               {leaders.map((leader) => (
-                <div key={leader.id} className="leader-card">
+                <article key={leader.id} className="leader-card">
                   <div className="leader-header">
                     <div>
                       <div className="leader-name">{leader.name}</div>
                       <div className="leader-role">{leader.title}</div>
                       <div className="leader-meta">
-                        {leader.company} • {leader.location}
+                        {leader.company} · {leader.location}
                       </div>
                     </div>
-                    <div
-                      className={`readiness-pill readiness-${leader.readiness.toLowerCase()}`}
-                    >
-                      {leader.readiness}
-                    </div>
+                    <StatusBeacon status={leader.readinessTier} />
                   </div>
 
                   <div className="leader-body">
                     <div className="leader-ring">
-                      <div className="ring-outer">
-                        <div
-                          className="ring-fill"
-                          style={{ "--value": `${leader.score}` }}
-                        />
+                      <div
+                        className="ring-outer"
+                        style={{
+                          "--value": leader.hireabilityScore,
+                        }}
+                      >
+                        <div className="ring-fill" />
                         <div className="ring-inner">
-                          <span className="ring-value">{leader.score}</span>
+                          <span className="ring-value">
+                            {leader.hireabilityScore}
+                          </span>
                           <span className="ring-label">/100</span>
                         </div>
                       </div>
                     </div>
+
                     <div className="leader-stats">
                       <div>
-                        <span className="stat-label">Hireability</span>
-                        <span className="stat-value">
-                          {leader.score}/100
-                        </span>
+                        <span className="stat-label">Hireability score</span>
+                        <div className="stat-value">
+                          {leader.hireabilityScore}/100
+                        </div>
                       </div>
                       <div>
                         <span className="stat-label">Warmth</span>
-                        <span className="stat-value">
-                          {leader.warmth}%
-                        </span>
+                        <div className="stat-value">
+                          {leader.warmth}
+                          {"%"}
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="leader-footer">
-                    <span className="leader-hint">
+                    <div className="leader-hint">
                       Open in Outreach Console
-                    </span>
-                    {/* THIS is the important bit: directly sets modal state */}
+                    </div>
                     <button
                       className="btn-outline"
-                      onClick={() => setActiveLeader(leader)}
+                      onClick={() => handleOutreach(leader)}
                     >
                       Outreach
                     </button>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           </section>
         </main>
-
-        {/* SIMPLE MODAL */}
-        {activeLeader && (
-          <div className="modal-backdrop" onClick={() => setActiveLeader(null)}>
-            <div
-              className="modal"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="modal-header">
-                <div>
-                  <div className="modal-eyebrow">Outreach preview</div>
-                  <div className="modal-name">{activeLeader.name}</div>
-                  <div className="modal-title">
-                    {activeLeader.title} · {activeLeader.company} ·{" "}
-                    {activeLeader.location}
-                  </div>
-                </div>
-                <button
-                  className="modal-close"
-                  onClick={() => setActiveLeader(null)}
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="modal-section-label">
-                Message you can paste into email / LinkedIn
-              </div>
-
-              <textarea
-                className="modal-message"
-                readOnly
-                value={buildMessage(activeLeader)}
-              />
-
-              <div className="modal-footer">
-                <span className="modal-hint">
-                  Copy & paste into LinkedIn / email / your outreach console.
-                </span>
-                <button
-                  className="nav-cta modal-primary"
-                  onClick={() => {
-                    // safest: just try to copy; if it fails nothing breaks
-                    if (navigator.clipboard?.writeText) {
-                      navigator.clipboard.writeText(
-                        buildMessage(activeLeader)
-                      );
-                    }
-                  }}
-                >
-                  Copy message
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* OUTREACH MODAL */}
+      <OutreachModal
+        leader={selectedLeader}
+        onClose={() => setSelectedLeader(null)}
+      />
     </div>
   );
 }

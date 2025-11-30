@@ -337,12 +337,6 @@ body {
   background: #38bdf8;
 }
 
-.trend-lines {
-  margin-top: 4px;
-  display: flex;
-  gap: 4px;
-}
-
 /* Sparkline SVG ------------------------------------------------------------- */
 
 .sparkline {
@@ -353,10 +347,6 @@ body {
 .sparkline-line {
   stroke-linejoin: round;
   stroke-linecap: round;
-}
-
-.sparkline-fill {
-  opacity: 0.9;
 }
 
 /* Depth bars --------------------------------------------------------------- */
@@ -421,28 +411,21 @@ body {
   color: #e5e7eb;
 }
 
-.trigger-badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 0.62rem;
-  font-weight: 600;
+.trigger-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 4px;
 }
 
-.trigger-now {
-  background: rgba(34, 197, 94, 0.16);
-  color: #bbf7d0;
+.trigger-time-label {
+  font-size: 0.65rem;
+  color: #9ca3af;
 }
 
-.trigger-soon {
-  background: rgba(56, 189, 248, 0.16);
-  color: #bae6fd;
-}
-
-.trigger-watchlist {
-  background: rgba(168, 85, 247, 0.16);
-  color: #e9d5ff;
+.trigger-text {
+  font-size: 0.74rem;
+  color: #e5e7eb;
 }
 
 /* === MARKET RADAR ========================================================= */
@@ -524,33 +507,6 @@ body {
 .leader-meta {
   font-size: 0.7rem;
   color: #a5b4fc;
-}
-
-.readiness-pill {
-  border-radius: 999px;
-  padding: 3px 9px;
-  font-size: 0.65rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  border: 1px solid;
-}
-
-.readiness-now {
-  border-color: rgba(34, 197, 94, 0.7);
-  background: rgba(34, 197, 94, 0.18);
-  color: #bbf7d0;
-}
-
-.readiness-soon {
-  border-color: rgba(56, 189, 248, 0.7);
-  background: rgba(56, 189, 248, 0.18);
-  color: #bae6fd;
-}
-
-.readiness-watchlist {
-  border-color: rgba(168, 85, 247, 0.7);
-  background: rgba(168, 85, 247, 0.18);
-  color: #e9d5ff;
 }
 
 /* Ring score --------------------------------------------------------------- */
@@ -767,6 +723,127 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* === V3 STATUS BEACON ===================================================== */
+
+.status-beacon.v3 {
+  --sb-border: rgba(148, 163, 184, 0.45);
+  --sb-bg: rgba(15, 23, 42, 0.9);
+  --sb-glow: rgba(148, 163, 184, 0.38);
+  --sb-color: #e5e7eb;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--sb-border);
+  background: radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.6), var(--sb-bg));
+  color: var(--sb-color);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  user-select: none;
+  box-shadow: 0 0 0 0 var(--sb-glow);
+  animation: sb-breathe 3.2s ease-in-out infinite;
+  transform: translateZ(0);
+}
+
+.status-beacon.v3 .sb-ring {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sb-border);
+  box-shadow: 0 0 8px rgba(15, 23, 42, 0.6);
+  overflow: hidden;
+}
+
+.status-beacon.v3 .sb-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--sb-color);
+  box-shadow: 0 0 8px var(--sb-color);
+  animation: sb-pulse 1.4s ease-out infinite;
+}
+
+.status-beacon.v3 .sb-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-beacon.v3 .sb-icon {
+  font-size: 0.7rem;
+}
+
+/* Hover lift */
+.status-beacon.v3:hover {
+  box-shadow: 0 0 18px var(--sb-glow);
+  transform: translateY(-1px);
+}
+
+/* NOW – high urgency (green lightning)  */
+.status-beacon.v3.now {
+  --sb-color: #22c55e;
+  --sb-border: rgba(34, 197, 94, 0.7);
+  --sb-bg: rgba(21, 128, 61, 0.07);
+  --sb-glow: rgba(34, 197, 94, 0.45);
+}
+
+/* SOON – upcoming (cyan) */
+.status-beacon.v3.soon {
+  --sb-color: #38bdf8;
+  --sb-border: rgba(56, 189, 248, 0.7);
+  --sb-bg: rgba(8, 47, 73, 0.26);
+  --sb-glow: rgba(56, 189, 248, 0.45);
+}
+
+/* WATCHLIST – monitoring (violet) */
+.status-beacon.v3.watchlist {
+  --sb-color: #c084fc;
+  --sb-border: rgba(192, 132, 252, 0.75);
+  --sb-bg: rgba(46, 16, 101, 0.32);
+  --sb-glow: rgba(192, 132, 252, 0.5);
+}
+
+@keyframes sb-pulse {
+  0% {
+    transform: scale(0.9);
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+    opacity: 0.9;
+  }
+  40% {
+    transform: scale(1.1);
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.9);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+    opacity: 0.9;
+  }
+}
+
+@keyframes sb-breathe {
+  0% {
+    box-shadow: 0 0 0 0 var(--sb-glow);
+  }
+  50% {
+    box-shadow: 0 0 18px 2px var(--sb-glow);
+  }
+  100% {
+    box-shadow: 0 0 0 0 var(--sb-glow);
   }
 }
 
