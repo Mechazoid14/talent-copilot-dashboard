@@ -1,700 +1,529 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 
-// Leadership candidates (realistic GCC-style profiles)
-const candidates = [
-  // ---------- UAE: ENGINEERING ----------
+// ---------- DATA ----------
+
+const triggers = [
+  {
+    id: 1,
+    label: "NOW",
+    text: "Ahmed Rahman moved from Soon → Now — promotion gap crossed 36 months at Careem.",
+  },
+  {
+    id: 2,
+    label: "SOON",
+    text: "Rania Al Nasser led new fintech launch at STC — compensation competitiveness should be reviewed.",
+  },
+  {
+    id: 3,
+    label: "WATCHLIST",
+    text: "Farah Labib joined Watchlist — new AI data governance exposure at G42.",
+  },
+];
+
+const leaders = [
   {
     id: 1,
     name: "Ahmed Rahman",
-    title: "Director of Engineering - Mobility",
+    title: "Director of Engineering — Mobility",
     company: "Careem",
     location: "Dubai",
-    country: "UAE",
-    domain: "engineering",
-    hireabilityScore: 84,
-    readinessTier: "now",
-    signals: [
-      "Promotion gap 38 months",
-      "Led microservices migration",
-      "Team of 40+ engineers",
-    ],
-    warmth: 0.32,
+    readiness: "NOW",
+    score: 84,
+    warmth: 32,
   },
   {
     id: 2,
     name: "Nikhil Prasad",
-    title: "Senior Engineering Manager - Logistics",
+    title: "Senior Engineering Manager — Logistics",
     company: "Talabat",
     location: "Dubai",
-    country: "UAE",
-    domain: "engineering",
-    hireabilityScore: 79,
-    readinessTier: "soon",
-    signals: [
-      "Checkout latency reduction",
-      "High-traffic systems",
-      "Works closely with product",
-    ],
-    warmth: 0.24,
+    readiness: "SOON",
+    score: 79,
+    warmth: 24,
   },
   {
     id: 3,
     name: "Lina Mansour",
-    title: "Head of Engineering - Platform",
+    title: "Head of Engineering — Platform",
     company: "Noon",
     location: "Dubai",
-    country: "UAE",
-    domain: "engineering",
-    hireabilityScore: 82,
-    readinessTier: "watchlist",
-    signals: [
-      "Cloud cost optimisation",
-      "Platform reliability",
-      "Multi-country ownership",
-    ],
-    warmth: 0.18,
+    readiness: "WATCHLIST",
+    score: 82,
+    warmth: 18,
   },
   {
     id: 4,
     name: "Omar Suleiman",
-    title: "Principal Software Engineering Manager",
+    title: "Principal SWE Manager",
     company: "Microsoft",
     location: "Dubai",
-    country: "UAE",
-    domain: "engineering",
-    hireabilityScore: 87,
-    readinessTier: "soon",
-    signals: ["Azure-scale ownership", "Influences global roadmap"],
-    warmth: 0.21,
-  },
-
-  // ---------- UAE: PRODUCT ----------
-  {
-    id: 5,
-    name: "Sara Al Essa",
-    title: "Senior Product Manager - Growth",
-    company: "Tabby",
-    location: "Dubai",
-    country: "UAE",
-    domain: "product",
-    hireabilityScore: 81,
-    readinessTier: "now",
-    signals: [
-      "Experimentation culture",
-      "Checkout conversion wins",
-      "Owns PLG initiatives",
-    ],
-    warmth: 0.35,
-  },
-  {
-    id: 6,
-    name: "Harish Verma",
-    title: "Principal Product Manager - AI Experiences",
-    company: "Microsoft",
-    location: "Dubai",
-    country: "UAE",
-    domain: "product",
-    hireabilityScore: 78,
-    readinessTier: "soon",
-    signals: ["AI/ML feature ownership", "Cross-org influence"],
-    warmth: 0.22,
-  },
-  {
-    id: 7,
-    name: "Dalia Khaled",
-    title: "Director of Product - Marketplace",
-    company: "Yalla",
-    location: "Dubai",
-    country: "UAE",
-    domain: "product",
-    hireabilityScore: 80,
-    readinessTier: "watchlist",
-    signals: ["Monetisation strategy", "Consumer engagement"],
-    warmth: 0.16,
-  },
-  {
-    id: 8,
-    name: "Amir Farouk",
-    title: "Lead Product Manager - Media & Streaming",
-    company: "Anghami",
-    location: "Abu Dhabi",
-    country: "UAE",
-    domain: "product",
-    hireabilityScore: 76,
-    readinessTier: "soon",
-    signals: ["Subscription funnels", "Cross-border markets"],
-    warmth: 0.2,
-  },
-
-  // ---------- UAE: SECURITY ----------
-  {
-    id: 9,
-    name: "Rehan Ali",
-    title: "Senior Manager - Cyber Defense",
-    company: "e& Enterprise",
-    location: "Abu Dhabi",
-    country: "UAE",
-    domain: "security",
-    hireabilityScore: 73,
-    readinessTier: "now",
-    signals: ["Incident response lead", "24/7 SOC exposure"],
-    warmth: 0.3,
-  },
-  {
-    id: 10,
-    name: "Farah Labib",
-    title: "Head of Security & Compliance",
-    company: "G42",
-    location: "Abu Dhabi",
-    country: "UAE",
-    domain: "security",
-    hireabilityScore: 77,
-    readinessTier: "soon",
-    signals: ["Cloud compliance at scale", "AI data governance"],
-    warmth: 0.23,
-  },
-  {
-    id: 11,
-    name: "Nabeel Zahid",
-    title: "Principal Consultant - Offensive Security",
-    company: "DarkMatter",
-    location: "Abu Dhabi",
-    country: "UAE",
-    domain: "security",
-    hireabilityScore: 72,
-    readinessTier: "watchlist",
-    signals: ["Red teaming", "Gov & critical infra exposure"],
-    warmth: 0.17,
-  },
-  {
-    id: 12,
-    name: "Priya Chand",
-    title: "Regional Security Architect - Zero Trust",
-    company: "Cisco",
-    location: "Dubai",
-    country: "UAE",
-    domain: "security",
-    hireabilityScore: 75,
-    readinessTier: "soon",
-    signals: ["Zero trust rollouts", "Multi-cloud security"],
-    warmth: 0.21,
-  },
-
-  // ---------- SAUDI: ENGINEERING ----------
-  {
-    id: 13,
-    name: "Faisal Al Harbi",
-    title: "Senior Engineering Manager - Payments",
-    company: "STC Pay",
-    location: "Riyadh",
-    country: "Saudi Arabia",
-    domain: "engineering",
-    hireabilityScore: 82,
-    readinessTier: "soon",
-    signals: ["High-scale payments", "KSA-first architecture"],
-    warmth: 0.25,
-  },
-  {
-    id: 14,
-    name: "Mariam Al Qahtani",
-    title: "Director of Engineering - Platforms",
-    company: "Aramco Digital",
-    location: "Dhahran",
-    country: "Saudi Arabia",
-    domain: "engineering",
-    hireabilityScore: 80,
-    readinessTier: "watchlist",
-    signals: ["Data platform modernisation", "Cloud enablement"],
-    warmth: 0.18,
-  },
-
-  // ---------- SAUDI: PRODUCT ----------
-  {
-    id: 15,
-    name: "Yousef Al Saud",
-    title: "Head of Product - AI Platforms",
-    company: "NEOM Tech",
-    location: "Riyadh",
-    country: "Saudi Arabia",
-    domain: "product",
-    hireabilityScore: 83,
-    readinessTier: "soon",
-    signals: ["AI platform roadmap", "Greenfield ecosystem"],
-    warmth: 0.27,
-  },
-  {
-    id: 16,
-    name: "Rania Al Nasser",
-    title: "Lead Product Manager - Fintech",
-    company: "STC",
-    location: "Riyadh",
-    country: "Saudi Arabia",
-    domain: "product",
-    hireabilityScore: 79,
-    readinessTier: "now",
-    signals: ["KSA fintech regulation", "Digital wallets"],
-    warmth: 0.34,
-  },
-
-  // ---------- SAUDI: SECURITY ----------
-  {
-    id: 17,
-    name: "Khalid Al Hassan",
-    title: "Head of Cybersecurity",
-    company: "Saudi National Bank",
-    location: "Riyadh",
-    country: "Saudi Arabia",
-    domain: "security",
-    hireabilityScore: 78,
-    readinessTier: "now",
-    signals: ["Banking cyber", "Risk & governance"],
-    warmth: 0.29,
-  },
-  {
-    id: 18,
-    name: "Lama Al Jaber",
-    title: "Director - Cloud Security",
-    company: "SDAIA",
-    location: "Riyadh",
-    country: "Saudi Arabia",
-    domain: "security",
-    hireabilityScore: 80,
-    readinessTier: "soon",
-    signals: ["National AI security", "Hybrid cloud"],
-    warmth: 0.24,
+    readiness: "SOON",
+    score: 87,
+    warmth: 21,
   },
 ];
 
-// Region-based stats
-const regionStats = {
-  UAE: {
-    success: 72,
-    time: "48 days",
-    relocation: "High",
-    pressure: "High ↑",
-  },
-  "Saudi Arabia": {
-    success: 68,
-    time: "61 days",
-    relocation: "Medium",
-    pressure: "Very High ↑↑",
-  },
-};
+const demandSeries = [48, 62, 70, 80, 76, 83, 92];
+const supplySeries = [72, 74, 71, 69, 64, 60, 58];
 
-// Region + domain supply heat (0–1 range)
-const supplyHeat = {
-  UAE: {
-    engineering: 0.86,
-    product: 0.8,
-    security: 0.76,
-  },
-  "Saudi Arabia": {
-    engineering: 0.78,
-    product: 0.81,
-    security: 0.88,
-  },
-};
+// ---------- SMALL HOOKS / VIZ ----------
 
-// Region-level market insights
-const marketInsights = {
-  UAE: {
-    engineering: "Strong senior engineering leadership across Dubai & Abu Dhabi; highly competitive for platform & data roles.",
-    product:
-      "Mature product talent in BNPL, marketplaces and SaaS; strong growth & monetisation experience.",
-    security:
-      "Deep cyber & cloud security from telco, gov and AI orgs; GCC hub for security leadership.",
-  },
-  "Saudi Arabia": {
-    engineering:
-      "Growing depth in platform, data and fintech engineering; national-scale transformation projects.",
-    product:
-      "High impact product talent in fintech, AI and smart city; many roles linked to mega-projects.",
-    security:
-      "One of the strongest cyber markets in the region; banking, gov and national AI security demand is intense.",
-  },
-};
+function useAnimatedNumber(target, duration = 800) {
+  const [value, setValue] = useState(0);
 
-// Map readiness tier to CSS class
-const readinessBadgeClass = (tier) => {
-  switch (tier) {
-    case "now":
-      return "badge now";
-    case "soon":
-      return "badge soon";
-    default:
-      return "badge watchlist";
-  }
-};
+  useEffect(() => {
+    let frame;
+    const start = performance.now();
+
+    const animate = (now) => {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(target * eased));
+      if (progress < 1) frame = requestAnimationFrame(animate);
+    };
+
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [target, duration]);
+
+  return value;
+}
+
+function SuccessGauge({ value }) {
+  const radius = 48;
+  const stroke = 10;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - value / 100);
+
+  return (
+    <svg className="gauge" viewBox="0 0 140 140" aria-hidden="true">
+      <defs>
+        <linearGradient id="gaugeStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#22c55e" />
+          <stop offset="50%" stopColor="#38bdf8" />
+          <stop offset="100%" stopColor="#a855f7" />
+        </linearGradient>
+      </defs>
+      <circle
+        className="gauge-track"
+        cx="70"
+        cy="70"
+        r={radius}
+        strokeWidth={stroke}
+      />
+      <circle
+        className="gauge-fill"
+        cx="70"
+        cy="70"
+        r={radius}
+        strokeWidth={stroke}
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+      />
+      <text x="70" y="70" textAnchor="middle" className="gauge-value">
+        {value}%
+      </text>
+      <text x="70" y="88" textAnchor="middle" className="gauge-label">
+        Success
+      </text>
+    </svg>
+  );
+}
+
+function Sparkline({ data, color = "#38bdf8" }) {
+  if (!data || !data.length) return null;
+
+  const width = 140;
+  const height = 42;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+
+  const points = data
+    .map((v, i) => {
+      const x = (i / (data.length - 1 || 1)) * width;
+      const y = height - ((v - min) / range) * height;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  return (
+    <svg className="sparkline" viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        points={points}
+        className="sparkline-line"
+      />
+      <defs>
+        <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.24" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon
+        className="sparkline-fill"
+        fill="url(#sparkFill)"
+        points={`${points} ${width},${height} 0,${height}`}
+      />
+    </svg>
+  );
+}
+
+function DepthBar({ label, value }) {
+  return (
+    <div className="depth-bar-row">
+      <span className="depth-label">{label}</span>
+      <div className="depth-track">
+        <div className="depth-fill" style={{ width: `${value}%` }} />
+      </div>
+      <span className="depth-value">{value}</span>
+    </div>
+  );
+}
+
+function MarketInsight({ label, text }) {
+  return (
+    <div className="market-card">
+      <div className="market-pill">{label}</div>
+      <p>{text}</p>
+    </div>
+  );
+}
+
+// ---------- MAIN APP ----------
 
 function App() {
-  const [activeDomain, setActiveDomain] = useState("engineering");
-  const [selectedCandidate, setSelectedCandidate] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [region, setRegion] = useState("UAE");
+  const [fnFilter, setFnFilter] = useState("Engineering");
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
+  // This is the ONLY state we need for the modal
+  const [activeLeader, setActiveLeader] = useState(null);
+
+  const success = useAnimatedNumber(72);
+  const timeToFill = useAnimatedNumber(48);
+  const depth = { engineering: 92, product: 76, security: 64 };
+
+  const buildMessage = (leader) => {
+    if (!leader) return "";
+    return `Hi ${leader.name.split(" ")[0]},
+
+I’ve been tracking senior ${fnFilter.toLowerCase()} leadership across ${region}, and your work at ${leader.company} in ${leader.location} really stands out.
+
+We’re running a confidential search for a ${fnFilter.toLowerCase()} leadership role and Talent Copilot signals a very strong fit in terms of scope, impact and timing.
+
+Would you be open to a short conversation this week to explore if it aligns with your next move?
+
+Best,
+Ayush`;
   };
-
-  const filteredCandidates = candidates.filter((c) => {
-    if (c.domain !== activeDomain) return false;
-    if (c.country !== region) return false;
-    if (!searchQuery.trim()) return true;
-
-    const q = searchQuery.toLowerCase();
-    return (
-      c.name.toLowerCase().includes(q) ||
-      c.company.toLowerCase().includes(q) ||
-      c.title.toLowerCase().includes(q) ||
-      c.location.toLowerCase().includes(q)
-    );
-  });
-
-  const getSubtitle = () => {
-    switch (activeDomain) {
-      case "engineering":
-        return "Engineering Leadership Talent Board";
-      case "product":
-        return "Product Leadership Talent Board";
-      case "security":
-        return "Security Leadership Talent Board";
-      default:
-        return "";
-    }
-  };
-
-  const openOutreach = (candidate) => {
-    setSelectedCandidate(candidate);
-  };
-
-  const closeOutreach = () => {
-    setSelectedCandidate(null);
-  };
-
-  const copyMessage = async () => {
-    if (!selectedCandidate) return;
-
-    const firstName = selectedCandidate.name.split(" ")[0];
-    const msg = `Hi ${firstName},
-
-I’ve been tracking how leaders like you are driving ${selectedCandidate.domain} outcomes across ${region}. Your ownership of ${
-      selectedCandidate.signals[0] || "key initiatives"
-    } at ${selectedCandidate.company} really stood out.
-
-I’m working with a leadership team that’s building the next phase of their ${
-      selectedCandidate.domain
-    } strategy in ${region}, and your background looks like a strong fit for what they’re trying to solve in the next 12–18 months.
-
-Would you be open to a short, no-commitment conversation to explore whether this could be an interesting move for you?`;
-
-    try {
-      await navigator.clipboard.writeText(msg);
-      alert("Outreach draft copied to clipboard ✅");
-    } catch (e) {
-      alert("Couldn’t auto-copy, please copy manually.");
-    }
-  };
-
-  const currentHeat = supplyHeat[region];
-  const currentInsights = marketInsights[region];
 
   return (
     <div className="App">
-      {/* TOP NAV WITH BRANDING */}
-      <header>
-        <div className="header-left">
-          <div className="logo">TC</div>
-          <div>
-            <div className="product-name">Talent Copilot</div>
-            <div className="product-tagline">
-              GCC Leadership Command Center (UAE · Saudi Arabia)
-            </div>
-          </div>
-        </div>
-        <div className="header-right">
-          <div className="founder-line">
-            Ayush Mishra · Founder — Talent Copilot
-          </div>
-          <button>Book Strategy Call</button>
-        </div>
-      </header>
-
-      <main>
-        {/* OVERVIEW ROW */}
-        <section className="overview-row">
-          {/* Feasibility Intelligence Card */}
-          <div className="card large">
-            <div className="card-header">
-              <h2>Role Feasibility Intelligence</h2>
-              <span>Region: {region}</span>
-            </div>
-            <div className="feasibility-stats">
-              <div className="stat">
-                <label>Success Probability</label>
-                <span className="highlight">
-                  {regionStats[region].success}%
-                </span>
-              </div>
-              <div className="stat">
-                <label>Time-to-Fill</label>
-                <span className="highlight">{regionStats[region].time}</span>
-              </div>
-              <div className="stat">
-                <label>Relocation Friendly</label>
-                <span className="highlight">
-                  {regionStats[region].relocation}
-                </span>
-              </div>
-              <div className="stat">
-                <label>Market Pressure</label>
-                <span className="highlight high">
-                  {regionStats[region].pressure}
-                </span>
-              </div>
-            </div>
-
-            <div className="supply-heatbars">
-              <div className="heat-title">Talent Depth by Function</div>
-              <div className="heat-row">
-                <span className="heat-label">Engineering</span>
-                <div className="heat-bar">
-                  <div
-                    className="heat-fill eng"
-                    style={{ width: `${currentHeat.engineering * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-              <div className="heat-row">
-                <span className="heat-label">Product</span>
-                <div className="heat-bar">
-                  <div
-                    className="heat-fill prod"
-                    style={{ width: `${currentHeat.product * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-              <div className="heat-row">
-                <span className="heat-label">Security</span>
-                <div className="heat-bar">
-                  <div
-                    className="heat-fill sec"
-                    style={{ width: `${currentHeat.security * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Trigger Notifications */}
-          <div className="card notifications">
-            <div className="card-header">
-              <h2>Trigger Notifications</h2>
-              <span>Now / Soon / Watchlist</span>
-            </div>
-            <ul className="notif-list">
-              <li>
-                <strong>Ahmed Rahman</strong> moved from Soon to Now — promotion
-                gap crossed 36 months at Careem.
-              </li>
-              <li>
-                <strong>Rania Al Nasser</strong> led new fintech launch at STC —
-                offer competitiveness should be reviewed.
-              </li>
-              <li>
-                <strong>Farah Labib</strong> joined Watchlist — new AI data
-                governance exposure at G42.
-              </li>
-            </ul>
-          </div>
-        </section>
-
-        {/* REGION TABS */}
-        <div className="region-tabs">
-          {["UAE", "Saudi Arabia"].map((reg) => (
-            <button
-              key={reg}
-              className={region === reg ? "tab active" : "tab"}
-              onClick={() => setRegion(reg)}
-            >
-              {reg}
-            </button>
-          ))}
-        </div>
-
-        {/* DOMAIN TABS */}
-        <div className="domain-tabs">
-          {["engineering", "product", "security"].map((domain) => (
-            <button
-              key={domain}
-              className={activeDomain === domain ? "tab active" : "tab"}
-              onClick={() => {
-                setActiveDomain(domain);
-                setSearchQuery(""); // reset search when switching domain
-              }}
-            >
-              {domain.charAt(0).toUpperCase() + domain.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        {/* SEARCH BAR */}
-        <div className="search-row">
-          <input
-            type="text"
-            placeholder="Search leaders by name, company or role..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-          />
-        </div>
-
-        {/* MARKET INSIGHTS CARD */}
-        <section className="card market-card">
-          <div className="card-header">
-            <h2>Market Insights — {region}</h2>
-            <span>Engineering · Product · Security</span>
-          </div>
-          <div className="insights-list">
-            <div className="insight-row">
-              <div className="pill eng-pill">Engineering</div>
-              <p>{currentInsights.engineering}</p>
-            </div>
-            <div className="insight-row">
-              <div className="pill prod-pill">Product</div>
-              <p>{currentInsights.product}</p>
-            </div>
-            <div className="insight-row">
-              <div className="pill sec-pill">Security</div>
-              <p>{currentInsights.security}</p>
-            </div>
-          </div>
-        </section>
-
-        {/* TALENT BOARD */}
-        <section className="card talent-board">
-          <div className="card-header">
+      <div className="command-shell">
+        {/* TOP NAV */}
+        <header className="command-nav">
+          <div className="nav-left">
+            <div className="nav-logo">TC</div>
             <div>
-              <h2>{getSubtitle()}</h2>
-              <span>
-                {region} · Now / Soon / Watchlist Intelligence ·{" "}
-                {filteredCandidates.length} leaders surfaced
-              </span>
+              <div className="nav-product">TALENT COPILOT</div>
+              <div className="nav-sub">
+                GCC Leadership Command Center ({region})
+              </div>
+            </div>
+          </div>
+          <div className="nav-right">
+            <span className="nav-founder">
+              Ayush Mishra • Founder — Talent Copilot
+            </span>
+            <button className="nav-cta">Book Strategy Call</button>
+          </div>
+        </header>
+
+        <main className="command-main">
+          {/* FILTERS */}
+          <div className="filters-row">
+            <div className="pill-group">
+              {["UAE", "Saudi Arabia"].map((r) => (
+                <button
+                  key={r}
+                  className={region === r ? "filter-pill active" : "filter-pill"}
+                  onClick={() => setRegion(r)}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+            <div className="pill-group">
+              {["Engineering", "Product", "Security"].map((fn) => (
+                <button
+                  key={fn}
+                  className={fnFilter === fn ? "filter-pill active" : "filter-pill"}
+                  onClick={() => setFnFilter(fn)}
+                >
+                  {fn}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="cards-grid">
-            {filteredCandidates.map((c) => {
-              const regionMatch = c.country === region;
-              return (
-                <div
-                  key={c.id}
-                  className={
-                    regionMatch
-                      ? "candidate-card"
-                      : "candidate-card candidate-cross"
-                  }
-                >
-                  <div className="candidate-top">
+          {/* ROW 1 – FEASIBILITY + TRIGGERS */}
+          <section className="grid-two slide-up">
+            <div className="panel panel-feasibility">
+              <div className="panel-header">
+                <div>
+                  <h2>Role Feasibility Intelligence</h2>
+                  <p className="panel-sub">
+                    Predictive read on whether this brief can be closed on time in {region}.
+                  </p>
+                </div>
+                <span className="panel-tag">Live · 2h ago</span>
+              </div>
+
+              <div className="feasibility-grid">
+                <div className="gauge-block">
+                  <SuccessGauge value={success} />
+                </div>
+
+                <div className="feasibility-metrics">
+                  <div className="metric-row">
                     <div>
-                      <div className="candidate-name">{c.name}</div>
-                      <div className="candidate-title">{c.title}</div>
+                      <span className="metric-label">Time-to-fill</span>
+                      <span className="metric-value">{timeToFill} days</span>
                     </div>
-                    <div className={readinessBadgeClass(c.readinessTier)}>
-                      {c.readinessTier}
+                    <div>
+                      <span className="metric-label">Relocation friendly</span>
+                      <span className="metric-value">High</span>
                     </div>
                   </div>
-                  <div className="candidate-meta">
-                    {c.company} • {c.location}
+                  <div className="metric-row">
+                    <div>
+                      <span className="metric-label">Market pressure</span>
+                      <span className="metric-value danger">
+                        High <span className="metric-arrow">↑</span>
+                      </span>
+                    </div>
+                    <div>
+                      <span className="metric-label">Function focus</span>
+                      <span className="metric-value">
+                        {fnFilter} leadership
+                      </span>
+                    </div>
                   </div>
-                  <div className="candidate-region">
-                    {regionMatch ? "Core region fit" : "Cross-border target"}
+
+                  <div className="trend-block">
+                    <div className="trend-header">
+                      <span className="metric-label">Demand vs supply trend</span>
+                      <span className="trend-legend">
+                        <span className="dot demand" /> Demand
+                        <span className="dot supply" /> Supply
+                      </span>
+                    </div>
+                    <div className="trend-lines">
+                      <Sparkline data={demandSeries} color="#f97316" />
+                      <Sparkline data={supplySeries} color="#38bdf8" />
+                    </div>
                   </div>
-                  <div className="candidate-score-row">
-                    <span>Hireability score</span>
-                    <span className="score">{c.hireabilityScore}/100</span>
+                </div>
+              </div>
+
+              <div className="depth-row">
+                <span className="metric-label">Talent depth (UAE)</span>
+                <div className="depth-bars">
+                  <DepthBar label="Engineering" value={depth.engineering} />
+                  <DepthBar label="Product" value={depth.product} />
+                  <DepthBar label="Security" value={depth.security} />
+                </div>
+              </div>
+            </div>
+
+            <div className="panel panel-triggers">
+              <div className="panel-header">
+                <div>
+                  <h2>Trigger Notifications</h2>
+                  <p className="panel-sub">
+                    Watch how leadership readiness shifts across the GCC.
+                  </p>
+                </div>
+                <span className="panel-tag">Now / Soon / Watchlist</span>
+              </div>
+
+              <div className="trigger-list">
+                {triggers.map((t) => (
+                  <div key={t.id} className="trigger-item">
+                    <span className={`trigger-badge trigger-${t.label.toLowerCase()}`}>
+                      {t.label}
+                    </span>
+                    <p>{t.text}</p>
                   </div>
-                  <div className="candidate-footer">
-                    <span>Warmth: {(c.warmth * 100).toFixed(0)}%</span>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ROW 2 – MARKET RADAR */}
+          <section className="panel panel-market slide-up">
+            <div className="panel-header">
+              <div>
+                <h2>Market Radar — {region}</h2>
+                <p className="panel-sub">
+                  Snapshot of leadership depth, compensation pressure, and relocation appetite for GCC tech.
+                </p>
+              </div>
+              <span className="panel-tag">Engineering · Product · Security</span>
+            </div>
+
+            <div className="market-grid">
+              <MarketInsight
+                label="ENGINEERING"
+                text="Strong senior engineering leadership across Dubai & Abu Dhabi; highly competitive for platform & data leadership."
+              />
+              <MarketInsight
+                label="PRODUCT"
+                text="Mature product talent in BNPL, marketplaces & SaaS; strong growth & monetisation track record."
+              />
+              <MarketInsight
+                label="SECURITY"
+                text="Deep cloud & cyber leaders from telco, government, and AI orgs; UAE is now the GCC hub for security leadership."
+              />
+            </div>
+          </section>
+
+          {/* ROW 3 – LEADERSHIP BOARD */}
+          <section className="panel panel-leaders slide-up">
+            <div className="panel-header">
+              <div>
+                <h2>Leadership Talent Board</h2>
+                <p className="panel-sub">
+                  Ranked by hireability & readiness tier for {fnFilter} leadership roles.
+                </p>
+              </div>
+              <span className="panel-tag">Now · Soon · Watchlist</span>
+            </div>
+
+            <div className="leaders-row">
+              {leaders.map((leader) => (
+                <div key={leader.id} className="leader-card">
+                  <div className="leader-header">
+                    <div>
+                      <div className="leader-name">{leader.name}</div>
+                      <div className="leader-role">{leader.title}</div>
+                      <div className="leader-meta">
+                        {leader.company} • {leader.location}
+                      </div>
+                    </div>
+                    <div
+                      className={`readiness-pill readiness-${leader.readiness.toLowerCase()}`}
+                    >
+                      {leader.readiness}
+                    </div>
+                  </div>
+
+                  <div className="leader-body">
+                    <div className="leader-ring">
+                      <div className="ring-outer">
+                        <div
+                          className="ring-fill"
+                          style={{ "--value": `${leader.score}` }}
+                        />
+                        <div className="ring-inner">
+                          <span className="ring-value">{leader.score}</span>
+                          <span className="ring-label">/100</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="leader-stats">
+                      <div>
+                        <span className="stat-label">Hireability</span>
+                        <span className="stat-value">
+                          {leader.score}/100
+                        </span>
+                      </div>
+                      <div>
+                        <span className="stat-label">Warmth</span>
+                        <span className="stat-value">
+                          {leader.warmth}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="leader-footer">
+                    <span className="leader-hint">
+                      Open in Outreach Console
+                    </span>
+                    {/* THIS is the important bit: directly sets modal state */}
                     <button
-                      className="outreach-btn"
-                      onClick={() => openOutreach(c)}
+                      className="btn-outline"
+                      onClick={() => setActiveLeader(leader)}
                     >
                       Outreach
                     </button>
                   </div>
                 </div>
-              );
-            })}
-            {filteredCandidates.length === 0 && (
-              <div style={{ fontSize: "0.8rem", color: "#64748b" }}>
-                No leaders match this search in this region & domain.
-              </div>
-            )}
-          </div>
-        </section>
-      </main>
-
-      {/* OUTREACH MODAL */}
-      {selectedCandidate && (
-        <div className="modal-backdrop" onClick={closeOutreach}>
-          <div
-            className="modal"
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
-          >
-            <div className="modal-header">
-              <h3>Outreach Preview</h3>
-              <button className="modal-close" onClick={closeOutreach}>
-                ✕
-              </button>
+              ))}
             </div>
+          </section>
+        </main>
 
-            <div className="modal-body">
-              <div className="modal-candidate">
-                <div className="modal-name">{selectedCandidate.name}</div>
-                <div className="modal-title">
-                  {selectedCandidate.title} · {selectedCandidate.company}
+        {/* SIMPLE MODAL */}
+        {activeLeader && (
+          <div className="modal-backdrop" onClick={() => setActiveLeader(null)}>
+            <div
+              className="modal"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-header">
+                <div>
+                  <div className="modal-eyebrow">Outreach preview</div>
+                  <div className="modal-name">{activeLeader.name}</div>
+                  <div className="modal-title">
+                    {activeLeader.title} · {activeLeader.company} ·{" "}
+                    {activeLeader.location}
+                  </div>
                 </div>
-                <div className="modal-meta">
-                  {selectedCandidate.location} · {selectedCandidate.country}
-                </div>
+                <button
+                  className="modal-close"
+                  onClick={() => setActiveLeader(null)}
+                >
+                  ✕
+                </button>
               </div>
 
-              <div className="modal-section-label">Smart draft</div>
-              <div className="modal-message">
-                Hi {selectedCandidate.name.split(" ")[0]},
-                <br />
-                <br />
-                I’ve been tracking how leaders like you are driving{" "}
-                {selectedCandidate.domain} outcomes across {region}. Your
-                ownership of{" "}
-                {selectedCandidate.signals[0] || "key initiatives"} at{" "}
-                {selectedCandidate.company} really stood out.
-                <br />
-                <br />
-                I’m working with a leadership team that’s building the next
-                phase of their {selectedCandidate.domain} strategy in {region},
-                and your background looks like a strong fit for what they’re
-                trying to solve in the next 12–18 months.
-                <br />
-                <br />
-                Would you be open to a short, no-commitment conversation to
-                explore whether this could be an interesting move for you?
+              <div className="modal-section-label">
+                Message you can paste into email / LinkedIn
               </div>
-            </div>
 
-            <div className="modal-footer">
-              <button className="primary-btn" onClick={copyMessage}>
-                Copy message
-              </button>
-              <button className="secondary-btn" onClick={closeOutreach}>
-                Close
-              </button>
+              <textarea
+                className="modal-message"
+                readOnly
+                value={buildMessage(activeLeader)}
+              />
+
+              <div className="modal-footer">
+                <span className="modal-hint">
+                  Copy & paste into LinkedIn / email / your outreach console.
+                </span>
+                <button
+                  className="nav-cta modal-primary"
+                  onClick={() => {
+                    // safest: just try to copy; if it fails nothing breaks
+                    if (navigator.clipboard?.writeText) {
+                      navigator.clipboard.writeText(
+                        buildMessage(activeLeader)
+                      );
+                    }
+                  }}
+                >
+                  Copy message
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
