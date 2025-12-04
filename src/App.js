@@ -1,5 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
+import Papa from "papaparse";
+/* -------------------------------------------------------------------------- */
+/*  GOOGLE SHEETS CSV URL                                                     */
+/* -------------------------------------------------------------------------- */
+
+const LEADERS_CSV_URL =
+  "https://docs.google.com/spreadsheets/d/1wyfOlRg5TEA2bQKbu-1zmysBSrS7h1JCoPCNdq79OCQ/export?format=csv&gid=0";
 
 /* -------------------------------------------------------------------------- */
 /*  V3 STATUS BEACON COMPONENT                                                */
@@ -127,7 +134,9 @@ const Gauge = ({ value }) => {
 const OutreachModal = ({ leader, onClose }) => {
   if (!leader) return null;
 
-  const defaultMessage = `Hi ${leader.name.split(" ")[0]},
+  const firstName = leader.name ? leader.name.split(" ")[0] : "there";
+
+  const defaultMessage = `Hi ${firstName},
 
 I’ve been tracking your work around ${leader.focus} at ${leader.company} and believe you’re in the top readiness tier for a GCC leadership brief we’re shaping.
 
@@ -174,7 +183,7 @@ Would you be open to a short, confidential conversation about what “next 3 yea
 };
 
 /* -------------------------------------------------------------------------- */
-/*  SAMPLE DATA                                                               */
+/*  FALLBACK DATA IF SHEET FAILS                                              */
 /* -------------------------------------------------------------------------- */
 
 const trendDemand = [40, 55, 68, 72, 65];
@@ -225,7 +234,7 @@ const marketInsights = [
   },
 ];
 
-const leaders = [
+const fallbackLeaders = [
   {
     id: 1,
     name: "Ahmed Rahman",
@@ -236,6 +245,7 @@ const leaders = [
     hireabilityScore: 84,
     warmth: 32,
     focus: "mobility & platform scale",
+    function: "engineering",
   },
   {
     id: 2,
@@ -247,30 +257,75 @@ const leaders = [
     hireabilityScore: 79,
     warmth: 24,
     focus: "logistics & last-mile",
+    function: "engineering",
   },
   {
     id: 3,
     name: "Lina Mansour",
-    title: "Head of Engineering — Platform",
+    title: "Head of Product — Platform",
     company: "Noon",
     location: "Dubai",
     readinessTier: "watchlist",
     hireabilityScore: 82,
     warmth: 18,
     focus: "platform & reliability",
+    function: "product",
   },
   {
     id: 4,
     name: "Omar Suleiman",
-    title: "Principal SWE Manager",
+    title: "Principal Security Engineering Manager",
     company: "Microsoft",
     location: "Dubai",
     readinessTier: "soon",
     hireabilityScore: 87,
     warmth: 21,
     focus: "security & cloud scale",
+    function: "security",
   },
 ];
+
+/* -------------------------------------------------------------------------- */
+/*  CSV PARSER FOR LEADERS SHEET                                              */
+/*  Expecting headers:                                                        */
+/*  name,title,company,location,readinessTier,hireabilityScore,warmth,focus,  */
+/*  function                                                                  */
+/* -------------------------------------------------------------------------- */
+
+function parseLeadersCsv(csvText) {
+  const result = Papa.parse(csvText, {
+    header: true,
+    skipEmptyLines: true,
+  });
+
+  return result.data
+    .map((obj, idx) => {
+      const rawFn = (obj.function || "").toLowerCase().trim();
+
+      let fn = "";
+      if (rawFn.includes("engineer")) fn = "engineering";
+      else if (rawFn.includes("product")) fn = "product";
+      else if (rawFn.includes("sec")) fn = "security";
+      else fn = rawFn;
+
+      return {
+        id: idx + 1,
+        name: obj.name || "",
+        title: obj.title || "",
+        company: obj.company || "",
+        location: obj.location || "",
+        readinessTier: (obj.readinessTier || "").toLowerCase(),
+        hireabilityScore: Number(obj.hireabilityScore || 0),
+        warmth: Number(obj.warmth || 0),
+        focus: obj.focus || "",
+        function: fn,
+      };
+    })
+    .filter(Boolean);
+}
+
+
+
 
 /* -------------------------------------------------------------------------- */
 /*  MAIN APP                                                                  */
@@ -278,17 +333,51 @@ const leaders = [
 
 function App() {
   const [region, setRegion] = useState("UAE");
-  const [domain, setDomain] = useState("Security");
+  const [domain, setDomain] = useState("Engineering");
   const [selectedLeader, setSelectedLeader] = useState(null);
+
+  const [leaders, setLeaders] = useState(fallbackLeaders);
+  const [leadersLoading, setLeadersLoading] = useState(false);
+  const [leadersError, setLeadersError] = useState(null);
 
   const successProbability = 72;
   const timeToFillDays = 48;
   const relocationFriendly = "High";
   const marketPressure = "High ↑";
 
+  useEffect(() => {
+    async function loadLeaders() {
+      if (!LEADERS_CSV_URL) return;
+      try {
+        setLeadersLoading(true);
+        setLeadersError(null);
+
+        const res = await fetch(LEADERS_CSV_URL);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const text = await res.text();
+        const parsed = parseLeadersCsv(text);
+
+        if (parsed.length) {
+          setLeaders(parsed);
+        }
+      } catch (err) {
+        console.error("Failed to load leaders from sheet:", err);
+        setLeadersError("Could not sync leaders from Google Sheets.");
+      } finally {
+        setLeadersLoading(false);
+      }
+    }
+
+    loadLeaders();
+  }, []);
+
   const handleOutreach = (leader) => {
     setSelectedLeader(leader);
   };
+
+  const domainKey = domain.toLowerCase();
 
   return (
     <div className="App">
@@ -367,7 +456,9 @@ function App() {
                     </div>
                     <div className="metric-label">
                       Relocation friendly
-                      <span className="metric-value">{relocationFriendly}</span>
+                      <span className="metric-value">
+                        {relocationFriendly}
+                      </span>
                     </div>
                     <div className="metric-label">
                       Market pressure
@@ -388,10 +479,7 @@ function App() {
                       </div>
                     </div>
                     <div className="trend-lines">
-                      <Sparkline
-                        demand={trendDemand}
-                        supply={trendSupply}
-                      />
+                      <Sparkline demand={trendDemand} supply={trendSupply} />
                     </div>
                   </div>
 
@@ -479,68 +567,84 @@ function App() {
               <div className="panel-tag">Now · Soon · Watchlist</div>
             </div>
 
+            <div className="leaders-meta-row">
+              {leadersLoading && (
+                <span className="leaders-loading">
+                  Syncing leaders from sheet…
+                </span>
+              )}
+              {leadersError && (
+                <span className="leaders-error">{leadersError}</span>
+              )}
+            </div>
+
             <div className="leaders-row">
-              {leaders.map((leader) => (
-                <article key={leader.id} className="leader-card">
-                  <div className="leader-header">
-                    <div>
-                      <div className="leader-name">{leader.name}</div>
-                      <div className="leader-role">{leader.title}</div>
-                      <div className="leader-meta">
-                        {leader.company} · {leader.location}
+              {leaders
+                .filter(
+                  (leader) =>
+                    (leader.function || "").toLowerCase() === domainKey
+                )
+                .map((leader) => (
+                  <article key={leader.id} className="leader-card">
+                    <div className="leader-header">
+                      <div>
+                        <div className="leader-name">{leader.name}</div>
+                        <div className="leader-role">{leader.title}</div>
+                        <div className="leader-meta">
+                          {leader.company} · {leader.location}
+                        </div>
+                      </div>
+                      <StatusBeacon status={leader.readinessTier} />
+                    </div>
+
+                    <div className="leader-body">
+                      <div className="leader-ring">
+                        <div
+                          className="ring-outer"
+                          style={{
+                            "--value": leader.hireabilityScore,
+                          }}
+                        >
+                          <div className="ring-fill" />
+                          <div className="ring-inner">
+                            <span className="ring-value">
+                              {leader.hireabilityScore}
+                            </span>
+                            <span className="ring-label">/100</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="leader-stats">
+                        <div>
+                          <span className="stat-label">Hireability score</span>
+                          <div className="stat-value">
+                            {leader.hireabilityScore}/100
+                          </div>
+                        </div>
+                        <div>
+                          <span className="stat-label">Warmth</span>
+                          <div className="stat-value">
+                            {leader.warmth}
+                            {"%"}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <StatusBeacon status={leader.readinessTier} />
-                  </div>
 
-                  <div className="leader-body">
-                    <div className="leader-ring">
-                      <div
-                        className="ring-outer"
-                        style={{
-                          "--value": leader.hireabilityScore,
-                        }}
+                    <div className="leader-footer">
+                      <div className="leader-hint">
+                        Open in Outreach Console
+                      </div>
+                      <button
+                        className="btn-outline"
+                        onClick={() => handleOutreach(leader)}
                       >
-                        <div className="ring-fill" />
-                        <div className="ring-inner">
-                          <span className="ring-value">
-                            {leader.hireabilityScore}
-                          </span>
-                          <span className="ring-label">/100</span>
-                        </div>
-                      </div>
+                        Outreach
+                      </button>
                     </div>
-
-                    <div className="leader-stats">
-                      <div>
-                        <span className="stat-label">Hireability score</span>
-                        <div className="stat-value">
-                          {leader.hireabilityScore}/100
-                        </div>
-                      </div>
-                      <div>
-                        <span className="stat-label">Warmth</span>
-                        <div className="stat-value">
-                          {leader.warmth}
-                          {"%"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="leader-footer">
-                    <div className="leader-hint">
-                      Open in Outreach Console
-                    </div>
-                    <button
-                      className="btn-outline"
-                      onClick={() => handleOutreach(leader)}
-                    >
-                      Outreach
-                    </button>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                ))}
             </div>
           </section>
         </main>
