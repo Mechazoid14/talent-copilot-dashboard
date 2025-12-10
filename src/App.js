@@ -1,660 +1,634 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import "./App.css";
-import Papa from "papaparse";
-/* -------------------------------------------------------------------------- */
-/*  GOOGLE SHEETS CSV URL                                                     */
-/* -------------------------------------------------------------------------- */
 
-const LEADERS_CSV_URL =
-  "https://docs.google.com/spreadsheets/d/1wyfOlRg5TEA2bQKbu-1zmysBSrS7h1JCoPCNdq79OCQ/export?format=csv&gid=0";
-
-/* -------------------------------------------------------------------------- */
-/*  V3 STATUS BEACON COMPONENT                                                */
-/* -------------------------------------------------------------------------- */
-
-const StatusBeacon = ({ status }) => {
-  const normalized = (status || "").toLowerCase();
-  const iconMap = {
-    now: "⚡",
-    soon: "⏳",
-    watchlist: "👁‍🗨",
-  };
-
-  const icon = iconMap[normalized] || "●";
-  const label = (status || "").toUpperCase();
-
-  return (
-    <div className={`status-beacon v3 ${normalized}`}>
-      <span className="sb-ring" aria-hidden="true">
-        <span className="sb-dot" />
-      </span>
-      <span className="sb-label">
-        <span className="sb-icon">{icon}</span>
-        {label}
-      </span>
-    </div>
-  );
-};
-
-/* -------------------------------------------------------------------------- */
-/*  SIMPLE SPARKLINE COMPONENT (DEMAND VS SUPPLY)                             */
-/* -------------------------------------------------------------------------- */
-
-const Sparkline = ({ demand, supply }) => {
-  const width = 120;
-  const height = 40;
-
-  const toPath = (points) => {
-    if (!points || points.length === 0) return "";
-    const step = width / (points.length - 1 || 1);
-    return points
-      .map((v, i) => {
-        const x = i * step;
-        const y = height - (v / 100) * height;
-        return `${i === 0 ? "M" : "L"}${x},${y}`;
-      })
-      .join(" ");
-  };
-
-  const demandPath = toPath(demand);
-  const supplyPath = toPath(supply);
-
-  return (
-    <svg className="sparkline" viewBox={`0 0 ${width} ${height}`}>
-      <path
-        d={demandPath}
-        className="sparkline-line demand"
-        fill="none"
-        strokeWidth="2"
-      />
-      <path
-        d={supplyPath}
-        className="sparkline-line supply"
-        fill="none"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-};
-
-/* -------------------------------------------------------------------------- */
-/*  CIRCULAR GAUGE FOR SUCCESS PROBABILITY                                    */
-/* -------------------------------------------------------------------------- */
-
-const Gauge = ({ value }) => {
-  const size = 140;
-  const strokeWidth = 10;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const clamped = Math.max(0, Math.min(100, value));
-  const offset = circumference * (1 - clamped / 100);
-
-  return (
-    <svg className="gauge" viewBox={`0 0 ${size} ${size}`}>
-      <defs>
-        <linearGradient id="gaugeStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#22c55e" />
-          <stop offset="50%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#a855f7" />
-        </linearGradient>
-      </defs>
-
-      <circle
-        className="gauge-track"
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-      />
-      <circle
-        className="gauge-fill"
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-      />
-
-      <text
-        x="50%"
-        y="48%"
-        textAnchor="middle"
-        className="gauge-value"
-      >{`${clamped}%`}</text>
-      <text x="50%" y="63%" textAnchor="middle" className="gauge-label">
-        Success
-      </text>
-    </svg>
-  );
-};
-
-/* -------------------------------------------------------------------------- */
-/*  OUTREACH MODAL                                                            */
-/* -------------------------------------------------------------------------- */
-
-const OutreachModal = ({ leader, onClose }) => {
-  if (!leader) return null;
-
-  const firstName = leader.name ? leader.name.split(" ")[0] : "there";
-
-  const defaultMessage = `Hi ${firstName},
-
-I’ve been tracking your work around ${leader.focus} at ${leader.company} and believe you’re in the top readiness tier for a GCC leadership brief we’re shaping.
-
-Would you be open to a short, confidential conversation about what “next 3 years” looks like for you in ${leader.location}?`;
-
-  return (
-    <div className="modal-backdrop">
-      <div className="modal slide-up">
-        <div className="modal-header">
-          <div>
-            <div className="modal-eyebrow">Outreach Console</div>
-            <div className="modal-name">{leader.name}</div>
-            <div className="modal-title">
-              {leader.title} · {leader.company} · {leader.location}
-            </div>
-          </div>
-          <button className="modal-close" onClick={onClose}>
-            ✕
-          </button>
-        </div>
-
-        <div className="modal-section-label">Suggested opener</div>
-        <textarea
-          className="modal-message"
-          defaultValue={defaultMessage}
-        />
-
-        <div className="modal-footer">
-          <div className="modal-hint">
-            This is just a draft. You’ll send it via LinkedIn / email.
-          </div>
-          <div>
-            <button className="btn-outline secondary-btn" onClick={onClose}>
-              Close
-            </button>
-            <button className="nav-cta modal-primary" onClick={onClose}>
-              Mark as Contacted
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* -------------------------------------------------------------------------- */
-/*  FALLBACK DATA IF SHEET FAILS                                              */
-/* -------------------------------------------------------------------------- */
-
-const trendDemand = [40, 55, 68, 72, 65];
-const trendSupply = [70, 64, 59, 52, 45];
-
-const depthByFunction = [
-  { label: "Engineering", value: 92 },
-  { label: "Product", value: 76 },
-  { label: "Security", value: 64 },
-];
-
-const triggers = [
+const sampleLeaders = [
   {
     id: 1,
-    type: "now",
-    when: "2h ago",
-    text: "Ahmed Rahman moved from Soon → Now — promotion gap crossed 36 months at Careem.",
-  },
-  {
-    id: 2,
-    type: "soon",
-    when: "1d ago",
-    text: "Rania Al Nasser led new fintech launch at STC — compensation competitiveness should be reviewed.",
-  },
-  {
-    id: 3,
-    type: "watchlist",
-    when: "3d ago",
-    text: "Farah Labib joined Watchlist — new AI data governance exposure at G42.",
-  },
-];
-
-const marketInsights = [
-  {
-    id: 1,
-    tag: "Engineering",
-    text: "Strong senior engineering leadership across Dubai & Abu Dhabi; highly competitive for platform & data leadership.",
-  },
-  {
-    id: 2,
-    tag: "Product",
-    text: "Mature product talent in BNPL, marketplaces & SaaS; strong growth & monetisation track record.",
-  },
-  {
-    id: 3,
-    tag: "Security",
-    text: "Deep cyber & cloud security leaders from telco, gov and AI orgs; UAE is now the GCC hub for security leadership.",
-  },
-];
-
-const fallbackLeaders = [
-  {
-    id: 1,
-    name: "Ahmed Rahman",
-    title: "Director of Engineering — Mobility",
+    name: "Ahmed R.",
+    title: "Principal Engineering Manager",
     company: "Careem",
     location: "Dubai",
-    readinessTier: "now",
-    hireabilityScore: 84,
-    warmth: 32,
-    focus: "mobility & platform scale",
     function: "engineering",
+    readinessTier: "now",
+    hireabilityScore: 81,
+    warmth: 0.22,
+    signals: ["Promotion gap 34 months", "Cloud scale", "Market pressure"],
   },
   {
     id: 2,
-    name: "Nikhil Prasad",
-    title: "Senior Engineering Manager — Logistics",
-    company: "Talabat",
+    name: "Sana T.",
+    title: "Principal Product Manager - AI/ML",
+    company: "Microsoft",
     location: "Dubai",
+    function: "product",
     readinessTier: "soon",
-    hireabilityScore: 79,
-    warmth: 24,
-    focus: "logistics & last-mile",
-    function: "engineering",
+    hireabilityScore: 75,
+    warmth: 0.18,
+    signals: ["AI strategy ownership", "Relocation friendly"],
   },
   {
     id: 3,
-    name: "Lina Mansour",
-    title: "Head of Product — Platform",
-    company: "Noon",
-    location: "Dubai",
+    name: "Vikram S.",
+    title: "Senior Manager - Information Security",
+    company: "e& Enterprise",
+    location: "Abu Dhabi",
+    function: "security",
     readinessTier: "watchlist",
-    hireabilityScore: 82,
-    warmth: 18,
-    focus: "platform & reliability",
-    function: "product",
+    hireabilityScore: 68,
+    warmth: 0.12,
+    signals: ["Cloud security lead", "Compliance ownership"],
   },
   {
     id: 4,
-    name: "Omar Suleiman",
-    title: "Principal Security Engineering Manager",
-    company: "Microsoft",
-    location: "Dubai",
-    readinessTier: "soon",
-    hireabilityScore: 87,
-    warmth: 21,
-    focus: "security & cloud scale",
-    function: "security",
+    name: "Leena K.",
+    title: "Director Product - Payments",
+    company: "Fintech (Confidential)",
+    location: "Riyadh",
+    function: "product",
+    readinessTier: "now",
+    hireabilityScore: 83,
+    warmth: 0.3,
+    signals: ["Expansion charter", "Cross-market exposure"],
   },
 ];
 
-/* -------------------------------------------------------------------------- */
-/*  CSV PARSER FOR LEADERS SHEET                                              */
-/*  Expecting headers:                                                        */
-/*  name,title,company,location,readinessTier,hireabilityScore,warmth,focus,  */
-/*  function                                                                  */
-/* -------------------------------------------------------------------------- */
-
-function parseLeadersCsv(csvText) {
-  const result = Papa.parse(csvText, {
-    header: true,
-    skipEmptyLines: true,
-  });
-
-  return result.data
-    .map((obj, idx) => {
-      const rawFn = (obj.function || "").toLowerCase().trim();
-
-      let fn = "";
-      if (rawFn.includes("engineer")) fn = "engineering";
-      else if (rawFn.includes("product")) fn = "product";
-      else if (rawFn.includes("sec")) fn = "security";
-      else fn = rawFn;
-
-      return {
-        id: idx + 1,
-        name: obj.name || "",
-        title: obj.title || "",
-        company: obj.company || "",
-        location: obj.location || "",
-        readinessTier: (obj.readinessTier || "").toLowerCase(),
-        hireabilityScore: Number(obj.hireabilityScore || 0),
-        warmth: Number(obj.warmth || 0),
-        focus: obj.focus || "",
-        function: fn,
-      };
-    })
-    .filter(Boolean);
-}
-
-
-
-
-/* -------------------------------------------------------------------------- */
-/*  MAIN APP                                                                  */
-/* -------------------------------------------------------------------------- */
+const readinessOrder = ["now", "soon", "watchlist"];
 
 function App() {
-  const [region, setRegion] = useState("UAE");
-  const [domain, setDomain] = useState("Engineering");
-  const [selectedLeader, setSelectedLeader] = useState(null);
+  const [activeDomain, setActiveDomain] = useState("all");
+  const [radarMode, setRadarMode] = useState("both"); // market | leaders | both
+  const [consoleMode, setConsoleMode] = useState("terminal"); // terminal | hud
 
-  const [leaders, setLeaders] = useState(fallbackLeaders);
-  const [leadersLoading, setLeadersLoading] = useState(false);
-  const [leadersError, setLeadersError] = useState(null);
+  const filteredLeaders = useMemo(() => {
+    if (activeDomain === "all") return sampleLeaders;
+    return sampleLeaders.filter(
+      (l) => (l.function || "").toLowerCase() === activeDomain
+    );
+  }, [activeDomain]);
 
-  const successProbability = 72;
-  const timeToFillDays = 48;
-  const relocationFriendly = "High";
-  const marketPressure = "High ↑";
-
-  useEffect(() => {
-    async function loadLeaders() {
-      if (!LEADERS_CSV_URL) return;
-      try {
-        setLeadersLoading(true);
-        setLeadersError(null);
-
-        const res = await fetch(LEADERS_CSV_URL);
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const text = await res.text();
-        const parsed = parseLeadersCsv(text);
-
-        if (parsed.length) {
-          setLeaders(parsed);
-        }
-      } catch (err) {
-        console.error("Failed to load leaders from sheet:", err);
-        setLeadersError("Could not sync leaders from Google Sheets.");
-      } finally {
-        setLeadersLoading(false);
+  const readinessStats = useMemo(() => {
+    const base = { now: 0, soon: 0, watchlist: 0 };
+    sampleLeaders.forEach((l) => {
+      const tier = (l.readinessTier || "").toLowerCase();
+      if (tier === "now" || tier === "soon" || tier === "watchlist") {
+        base[tier] += 1;
       }
-    }
-
-    loadLeaders();
+    });
+    return base;
   }, []);
 
-  const handleOutreach = (leader) => {
-    setSelectedLeader(leader);
-  };
+  const activeStats = useMemo(() => {
+    const base = { now: 0, soon: 0, watchlist: 0 };
+    filteredLeaders.forEach((l) => {
+      const tier = (l.readinessTier || "").toLowerCase();
+      if (tier in base) base[tier] += 1;
+    });
+    return base;
+  }, [filteredLeaders]);
 
-  const domainKey = domain.toLowerCase();
+  const radarLegend = useMemo(() => {
+    if (radarMode === "market") {
+      return {
+        label: "Market readiness clusters (GCC leadership)",
+        stats: readinessStats,
+      };
+    }
+    if (radarMode === "leaders") {
+      return {
+        label: "Leaders in your current focus set",
+        stats: activeStats,
+      };
+    }
+    return {
+      label: "Market + current leaders overlay",
+      stats: {
+        now: readinessStats.now + activeStats.now,
+        soon: readinessStats.soon + activeStats.soon,
+        watchlist: readinessStats.watchlist + activeStats.watchlist,
+      },
+    };
+  }, [radarMode, readinessStats, activeStats]);
+
+  const totalLeaders = sampleLeaders.length;
 
   return (
     <div className="App">
-      <div className="command-shell">
-        {/* TOP NAV */}
-        <header className="command-nav">
-          <div className="nav-left">
-            <div className="nav-logo">TC</div>
-            <div>
-              <div className="nav-product">Talent Copilot</div>
-              <div className="nav-sub">
-                GCC Leadership Command Center ({region})
-              </div>
-            </div>
-          </div>
-          <div className="nav-right">
-            <div className="nav-founder">
-              Ayush Mishra · Founder — Talent Copilot
-            </div>
-            <button className="nav-cta">Book Strategy Call</button>
-          </div>
-        </header>
+      {/* BACKGROUND GRID */}
+      <div className="bg-grid" />
 
-        <main className="command-main">
-          {/* REGION + DOMAIN FILTERS */}
-          <div className="filters-row">
-            <div className="pill-group">
-              {["UAE", "Saudi Arabia"].map((r) => (
-                <button
-                  key={r}
-                  className={`filter-pill ${region === r ? "active" : ""}`}
-                  onClick={() => setRegion(r)}
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-            <div className="pill-group">
-              {["Engineering", "Product", "Security"].map((d) => (
-                <button
-                  key={d}
-                  className={`filter-pill ${domain === d ? "active" : ""}`}
-                  onClick={() => setDomain(d)}
-                >
-                  {d}
-                </button>
-              ))}
+      {/* TOP NAV */}
+      <header className="top-nav">
+        <div className="brand-block">
+          <div className="brand-logo">TC</div>
+          <div>
+            <div className="brand-eyebrow">Talent Copilot</div>
+            <div className="brand-title">
+              GCC Talent Intelligence Command Center
             </div>
           </div>
+        </div>
+        <div className="top-nav-right">
+          <div className="top-pill">
+            UAE • Saudi • Leadership • Engineering / Product / Security
+          </div>
+          <button className="primary-btn">
+            Book 20-min Strategy Review
+          </button>
+        </div>
+      </header>
 
-          {/* TOP GRID: FEASIBILITY + TRIGGERS */}
-          <section className="grid-two">
-            {/* ROLE FEASIBILITY PANEL */}
-            <section className="panel">
-              <div className="panel-header">
+      <div className="layout">
+        {/* SIDEBAR */}
+        <aside className="sidebar">
+          <div className="sidebar-section">
+            <div className="sidebar-label">View</div>
+            <button
+              className={
+                activeDomain === "all"
+                  ? "sidebar-tab sidebar-tab-active"
+                  : "sidebar-tab"
+              }
+              onClick={() => setActiveDomain("all")}
+            >
+              All Leadership
+            </button>
+            <button
+              className={
+                activeDomain === "engineering"
+                  ? "sidebar-tab sidebar-tab-active"
+                  : "sidebar-tab"
+              }
+              onClick={() => setActiveDomain("engineering")}
+            >
+              Engineering
+            </button>
+            <button
+              className={
+                activeDomain === "product"
+                  ? "sidebar-tab sidebar-tab-active"
+                  : "sidebar-tab"
+              }
+              onClick={() => setActiveDomain("product")}
+            >
+              Product
+            </button>
+            <button
+              className={
+                activeDomain === "security"
+                  ? "sidebar-tab sidebar-tab-active"
+                  : "sidebar-tab"
+              }
+              onClick={() => setActiveDomain("security")}
+            >
+              Security
+            </button>
+          </div>
+
+          <div className="sidebar-section">
+            <div className="sidebar-label">Radar Mode</div>
+            <button
+              className={
+                radarMode === "market"
+                  ? "sidebar-tab sidebar-tab-active"
+                  : "sidebar-tab"
+              }
+              onClick={() => setRadarMode("market")}
+            >
+              Market Only
+            </button>
+            <button
+              className={
+                radarMode === "leaders"
+                  ? "sidebar-tab sidebar-tab-active"
+                  : "sidebar-tab"
+              }
+              onClick={() => setRadarMode("leaders")}
+            >
+              Leaders Only
+            </button>
+            <button
+              className={
+                radarMode === "both"
+                  ? "sidebar-tab sidebar-tab-active"
+                  : "sidebar-tab"
+              }
+              onClick={() => setRadarMode("both")}
+            >
+              Combined View
+            </button>
+          </div>
+
+          <div className="sidebar-section">
+            <div className="sidebar-label">Console Mode</div>
+            <button
+              className={
+                consoleMode === "terminal"
+                  ? "sidebar-tab sidebar-tab-active"
+                  : "sidebar-tab"
+              }
+              onClick={() => setConsoleMode("terminal")}
+            >
+              Terminal
+            </button>
+            <button
+              className={
+                consoleMode === "hud"
+                  ? "sidebar-tab sidebar-tab-active"
+                  : "sidebar-tab"
+              }
+              onClick={() => setConsoleMode("hud")}
+            >
+              HUD Assistant
+            </button>
+          </div>
+        </aside>
+
+        {/* MAIN PANEL */}
+        <main className="main-panel">
+          {/* HERO ROW */}
+          <section className="hero-row">
+            {/* RADAR CARD */}
+            <div className="card radar-card">
+              <div className="card-header-row">
                 <div>
-                  <h2>Role Feasibility Intelligence</h2>
-                  <p className="panel-sub">
-                    Predictive read on whether this brief can be closed on time
-                    in {region}.
-                  </p>
+                  <div className="card-eyebrow">
+                    Real-time Readiness Radar
+                  </div>
+                  <div className="card-title">
+                    GCC Leadership Readiness Scan
+                  </div>
+                  <div className="card-subtitle">
+                    {radarLegend.label}
+                  </div>
                 </div>
-                <div className="panel-tag">Live · 2h ago</div>
+                <div className="card-metrics">
+                  <div className="metric-pill">
+                    Leaders tracked: <span>{totalLeaders}</span>
+                  </div>
+                  <div className="metric-pill">
+                    Domain focus:{" "}
+                    <span>
+                      {activeDomain === "all"
+                        ? "Engineering • Product • Security"
+                        : activeDomain.charAt(0).toUpperCase() +
+                          activeDomain.slice(1)}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div className="feasibility-grid">
-                <div className="gauge-block">
-                  <Gauge value={successProbability} />
+              <div className="radar-layout">
+                <div className="radar-shell">
+                  <div className="radar-circle radar-circle-outer" />
+                  <div className="radar-circle radar-circle-mid" />
+                  <div className="radar-circle radar-circle-inner" />
+                  <div className="radar-sweep" />
+                  {/* Static blips positioned for visual feel */}
+                  <div className="radar-blip blip-now" />
+                  <div className="radar-blip blip-soon" />
+                  <div className="radar-blip blip-watch" />
                 </div>
-
-                <div className="feasibility-metrics">
-                  <div className="metric-row">
-                    <div className="metric-label">
-                      Time-to-fill
-                      <span className="metric-value">{timeToFillDays} days</span>
-                    </div>
-                    <div className="metric-label">
-                      Relocation friendly
-                      <span className="metric-value">
-                        {relocationFriendly}
-                      </span>
-                    </div>
-                    <div className="metric-label">
-                      Market pressure
-                      <span className="metric-value danger">
-                        {marketPressure}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="trend-block">
-                    <div className="trend-header">
-                      <div className="panel-sub">Demand vs Supply trend</div>
-                      <div className="trend-legend">
-                        <span className="dot demand" />
-                        Demand
-                        <span className="dot supply" />
-                        Supply
+                <div className="radar-legend">
+                  {readinessOrder.map((tier) => (
+                    <div key={tier} className="legend-row">
+                      <div className={`legend-dot legend-${tier}`} />
+                      <div className="legend-label">
+                        {tier === "now"
+                          ? "Ready Now"
+                          : tier === "soon"
+                          ? "Ready Soon"
+                          : "Watchlist"}
+                      </div>
+                      <div className="legend-value">
+                        {radarLegend.stats[tier]}
                       </div>
                     </div>
-                    <div className="trend-lines">
-                      <Sparkline demand={trendDemand} supply={trendSupply} />
-                    </div>
-                  </div>
-
-                  <div className="depth-row">
-                    <div className="panel-sub">Talent depth ({region})</div>
-                    <div className="depth-bars">
-                      {depthByFunction.map((fn) => (
-                        <div key={fn.label} className="depth-bar-row">
-                          <span className="depth-label">{fn.label}</span>
-                          <div className="depth-track">
-                            <div
-                              className="depth-fill"
-                              style={{ width: `${fn.value}%` }}
-                            />
-                          </div>
-                          <span className="depth-value">{fn.value}</span>
-                        </div>
-                      ))}
-                    </div>
+                  ))}
+                  <div className="legend-footnote">
+                    Visual radar is indicative. Counts are driven by your
+                    live leadership intelligence.
                   </div>
                 </div>
               </div>
-            </section>
+            </div>
 
-            {/* TRIGGER NOTIFICATIONS PANEL */}
-            <section className="panel panel-triggers">
-              <div className="panel-header">
+            {/* SUMMARY CARD */}
+            <div className="card summary-card">
+              <div className="card-eyebrow">Hiring Risk Profile</div>
+              <div className="card-title">Current Search Snapshot</div>
+              <div className="summary-grid">
+                <div className="summary-block">
+                  <div className="summary-label">Overall Feasibility</div>
+                  <div className="summary-value">
+                    82<span className="summary-unit">/100</span>
+                  </div>
+                  <div className="summary-bar">
+                    <div
+                      className="summary-bar-fill fill-green"
+                      style={{ width: "82%" }}
+                    />
+                  </div>
+                  <div className="summary-note">
+                    Strong market alignment for your current brief.
+                  </div>
+                </div>
+                <div className="summary-block">
+                  <div className="summary-label">
+                    Offer Acceptance Likelihood
+                  </div>
+                  <div className="summary-value">
+                    74<span className="summary-unit">%</span>
+                  </div>
+                  <div className="summary-bar">
+                    <div
+                      className="summary-bar-fill fill-amber"
+                      style={{ width: "74%" }}
+                    />
+                  </div>
+                  <div className="summary-note">
+                    Sensitive to compensation and interview velocity.
+                  </div>
+                </div>
+                <div className="summary-block">
+                  <div className="summary-label">Pipeline Health</div>
+                  <div className="summary-value">
+                    3.1<span className="summary-unit">x</span>
+                  </div>
+                  <div className="summary-bar">
+                    <div
+                      className="summary-bar-fill fill-blue"
+                      style={{ width: "62%" }}
+                    />
+                  </div>
+                  <div className="summary-note">
+                    Balanced funnel for leadership roles in Dubai/Riyadh.
+                  </div>
+                </div>
+                <div className="summary-block">
+                  <div className="summary-label">Diversity Trajectory</div>
+                  <div className="summary-value">
+                    +9<span className="summary-unit">pts</span>
+                  </div>
+                  <div className="summary-bar">
+                    <div
+                      className="summary-bar-fill fill-purple"
+                      style={{ width: "54%" }}
+                    />
+                  </div>
+                  <div className="summary-note">
+                    Positive movement in shortlists vs last quarter.
+                  </div>
+                </div>
+              </div>
+              <div className="summary-footnote">
+                These indicators will eventually be powered by live ATS/HRIS
+                + market data. Right now they help tell the predictive story
+                to investors and partners.
+              </div>
+            </div>
+          </section>
+
+          {/* LEADERS + SIGNALS ROW */}
+          <section className="row-2">
+            <div className="card leaders-card">
+              <div className="card-header-row">
                 <div>
-                  <h2>Trigger Notifications</h2>
-                  <p className="panel-sub">
-                    Watch how leadership readiness shifts across the GCC.
-                  </p>
-                </div>
-                <div className="panel-tag">Now / Soon / Watchlist</div>
-              </div>
-
-              <div className="trigger-list">
-                {triggers.map((t) => (
-                  <div key={t.id} className="trigger-item">
-                    <div className="trigger-top">
-                      <StatusBeacon status={t.type} />
-                      <span className="trigger-time-label">{t.when}</span>
-                    </div>
-                    <div className="trigger-text">{t.text}</div>
+                  <div className="card-eyebrow">
+                    Leadership Profiles in Focus
                   </div>
-                ))}
-              </div>
-            </section>
-          </section>
-
-          {/* MARKET RADAR */}
-          <section className="panel panel-market">
-            <div className="panel-header">
-              <div>
-                <h2>Market Radar — {region}</h2>
-                <p className="panel-sub">
-                  Snapshot of leadership depth, compensation pressure, and
-                  relocation appetite for GCC tech.
-                </p>
-              </div>
-              <div className="panel-tag">
-                Engineering · Product · Security
-              </div>
-            </div>
-
-            <div className="market-grid">
-              {marketInsights.map((m) => (
-                <div key={m.id} className="market-card">
-                  <span className="market-pill">{m.tag}</span>
-                  <p>{m.text}</p>
+                  <div className="card-title">
+                    Shortlisted Leaders — {activeDomain === "all"
+                      ? "All Functions"
+                      : activeDomain.charAt(0).toUpperCase() +
+                        activeDomain.slice(1)}
+                  </div>
+                  <div className="card-subtitle">
+                    Warmth, hireability and key signals for potential outreach.
+                  </div>
                 </div>
-              ))}
-            </div>
-          </section>
-
-          {/* LEADERSHIP BOARD */}
-          <section className="panel panel-leaders">
-            <div className="panel-header">
-              <div>
-                <h2>Leadership Talent Board</h2>
-                <p className="panel-sub">
-                  Ranked by hireability &amp; readiness tier for {domain} roles.
-                </p>
               </div>
-              <div className="panel-tag">Now · Soon · Watchlist</div>
-            </div>
-
-            <div className="leaders-meta-row">
-              {leadersLoading && (
-                <span className="leaders-loading">
-                  Syncing leaders from sheet…
-                </span>
-              )}
-              {leadersError && (
-                <span className="leaders-error">{leadersError}</span>
-              )}
-            </div>
-
-            <div className="leaders-row">
-              {leaders
-                .filter(
-                  (leader) =>
-                    (leader.function || "").toLowerCase() === domainKey
-                )
-                .map((leader) => (
+              <div className="leaders-grid">
+                {filteredLeaders.map((leader) => (
                   <article key={leader.id} className="leader-card">
                     <div className="leader-header">
                       <div>
                         <div className="leader-name">{leader.name}</div>
-                        <div className="leader-role">{leader.title}</div>
+                        <div className="leader-title">{leader.title}</div>
                         <div className="leader-meta">
-                          {leader.company} · {leader.location}
+                          {leader.company} • {leader.location}
                         </div>
                       </div>
-                      <StatusBeacon status={leader.readinessTier} />
-                    </div>
-
-                    <div className="leader-body">
-                      <div className="leader-ring">
-                        <div
-                          className="ring-outer"
-                          style={{
-                            "--value": leader.hireabilityScore,
-                          }}
-                        >
-                          <div className="ring-fill" />
-                          <div className="ring-inner">
-                            <span className="ring-value">
-                              {leader.hireabilityScore}
-                            </span>
-                            <span className="ring-label">/100</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="leader-stats">
-                        <div>
-                          <span className="stat-label">Hireability score</span>
-                          <div className="stat-value">
-                            {leader.hireabilityScore}/100
-                          </div>
-                        </div>
-                        <div>
-                          <span className="stat-label">Warmth</span>
-                          <div className="stat-value">
-                            {leader.warmth}
-                            {"%"}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="leader-footer">
-                      <div className="leader-hint">
-                        Open in Outreach Console
-                      </div>
-                      <button
-                        className="btn-outline"
-                        onClick={() => handleOutreach(leader)}
+                      <div
+                        className={`tier-chip tier-${leader.readinessTier}`}
                       >
-                        Outreach
+                        {leader.readinessTier === "now"
+                          ? "Ready Now"
+                          : leader.readinessTier === "soon"
+                          ? "Ready Soon"
+                          : "Watchlist"}
+                      </div>
+                    </div>
+                    <div className="leader-stats-row">
+                      <div className="leader-stat">
+                        <span>Hireability</span>
+                        <strong>{leader.hireabilityScore}/100</strong>
+                      </div>
+                      <div className="leader-stat">
+                        <span>Warmth Index</span>
+                        <strong>
+                          {(leader.warmth * 100).toFixed(0)}
+                          %
+                        </strong>
+                      </div>
+                    </div>
+                    <div className="leader-signals">
+                      {leader.signals.map((s, idx) => (
+                        <span key={idx} className="signal-pill">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="leader-footer">
+                      <span className="leader-footnote">
+                        This is illustrative data to demonstrate how Talent
+                        Copilot will surface leadership signals.
+                      </span>
+                      <button className="ghost-btn">
+                        Open Outreach Playbook
                       </button>
                     </div>
                   </article>
                 ))}
+                {filteredLeaders.length === 0 && (
+                  <div className="empty-state">
+                    No leaders mapped yet for this function. In a live
+                    environment, this panel would pull directly from your ATS
+                    / talent map.
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* SIGNAL FEED */}
+            <div className="card signals-card">
+              <div className="card-eyebrow">Signals Feed</div>
+              <div className="card-title">Recent Leadership Market Signals</div>
+              <ul className="signals-list">
+                <li>
+                  <span className="signal-tag tag-green">Positive</span>
+                  Multiple GCC fintechs have opened Director / VP roles in
+                  Payments — talent movement expected in the next quarter.
+                </li>
+                <li>
+                  <span className="signal-tag tag-amber">Watch</span>
+                  Cybersecurity leadership demand in Riyadh is outpacing
+                  supply — feasibility drops if compensation is not adjusted.
+                </li>
+                <li>
+                  <span className="signal-tag tag-blue">Insight</span>
+                  Engineering leaders with AI/ML exposure are clustering in
+                  Dubai, with remote-friendly expectations rising.
+                </li>
+                <li>
+                  <span className="signal-tag tag-purple">Diversity</span>
+                  Leadership shortlists are still skewed in favour of a narrow
+                  demographic in some teams — diversity gains require
+                  deliberate sourcing.
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          {/* CONSOLE ROW */}
+          <section className="console-row card">
+            <div className="console-header">
+              <div>
+                <div className="card-eyebrow">Talent Strategy Console</div>
+                <div className="card-title">
+                  {consoleMode === "terminal"
+                    ? "Command-Line View"
+                    : "Assistant View"}
+                </div>
+                <div className="card-subtitle">
+                  Ask questions like: “How risky is my hiring plan?” or “Where
+                  is leadership readiness highest in GCC?”
+                </div>
+              </div>
+              <div className="console-mode-toggle">
+                <button
+                  className={
+                    consoleMode === "terminal"
+                      ? "toggle-chip toggle-chip-active"
+                      : "toggle-chip"
+                  }
+                  onClick={() => setConsoleMode("terminal")}
+                >
+                  Terminal
+                </button>
+                <button
+                  className={
+                    consoleMode === "hud"
+                      ? "toggle-chip toggle-chip-active"
+                      : "toggle-chip"
+                  }
+                  onClick={() => setConsoleMode("hud")}
+                >
+                  HUD Assistant
+                </button>
+              </div>
+            </div>
+
+            {consoleMode === "terminal" ? (
+              <div className="terminal-console">
+                <div className="terminal-line">
+                  &gt; INIT TALENT_COPILOT --region GCC --focus leadership
+                </div>
+                <div className="terminal-line terminal-ok">
+                  [OK] Data sources: market benchmarks, leadership map,
+                  readiness tiers.
+                </div>
+                <div className="terminal-line">
+                  &gt; SCAN --mode {radarMode.toUpperCase()} --function{" "}
+                  {activeDomain === "all" ? "ALL" : activeDomain.toUpperCase()}
+                </div>
+                <div className="terminal-line">
+                  [INFO] Readiness distribution:
+                  {"  "}
+                  NOW={radarLegend.stats.now} | SOON=
+                  {radarLegend.stats.soon} | WATCHLIST=
+                  {radarLegend.stats.watchlist}
+                </div>
+                <div className="terminal-line">
+                  [RISK] Hiring risk is moderate. Main drivers: competition for
+                  AI/ML, cybersecurity leadership; salary expectations trending
+                  upward in Dubai &amp; Riyadh.
+                </div>
+                <div className="terminal-line">
+                  [RECOMMEND] Accelerate warm outreach to high-readiness
+                  leaders. Align compensation bands for critical functions.
+                </div>
+                <div className="terminal-cursor">▌</div>
+              </div>
+            ) : (
+              <div className="hud-console">
+                <div className="hud-grid">
+                  <div className="hud-card">
+                    <div className="hud-label">Hiring Outlook</div>
+                    <div className="hud-main">
+                      GCC leadership hiring feasibility is{" "}
+                      <span className="hud-highlight">favourable</span> with
+                      concentrated readiness in{" "}
+                      <span className="hud-highlight">
+                        Engineering &amp; Product
+                      </span>{" "}
+                      across Dubai and Riyadh.
+                    </div>
+                    <div className="hud-meta">
+                      Suggested move: lock in top 3–5 warm leaders before the
+                      next funding or restructuring cycle.
+                    </div>
+                  </div>
+                  <div className="hud-card">
+                    <div className="hud-label">Risk &amp; Mitigation</div>
+                    <div className="hud-main">
+                      Primary risk factors:
+                      <ul>
+                        <li>Compensation misalignment for AI/ML leadership.</li>
+                        <li>
+                          Limited cybersecurity leadership pool in Saudi
+                          compared to demand.
+                        </li>
+                        <li>Offer drop-off if processes run too long.</li>
+                      </ul>
+                    </div>
+                    <div className="hud-meta">
+                      Playbook: tighten interview loops, pre-align ranges,
+                      emphasise impact &amp; autonomy in outreach.
+                    </div>
+                  </div>
+                  <div className="hud-card">
+                    <div className="hud-label">Next Best Actions</div>
+                    <ul className="hud-actions">
+                      <li>
+                        Shortlist 5–7 leaders in the <strong>“Ready Now”</strong>{" "}
+                        tier for immediate mapping conversations.
+                      </li>
+                      <li>
+                        Build a <strong>6–9 month bench</strong> for “Soon” tier
+                        leaders across GCC.
+                      </li>
+                      <li>
+                        Layer in <strong>diversity objectives</strong> at the
+                        shortlisting stage, not just at final offer.
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         </main>
       </div>
-
-      {/* OUTREACH MODAL */}
-      <OutreachModal
-        leader={selectedLeader}
-        onClose={() => setSelectedLeader(null)}
-      />
     </div>
   );
 }
